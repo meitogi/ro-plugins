@@ -1,0 +1,117 @@
+// ==UserScript==
+// @name         RO Plugin v3 — HomunAIShim
+// @namespace    robrowser
+// @version      1.2.0-a.1
+// @description  Optional reactivity layer for the native AIDriver.HO_AI Lua VM. The AI source itself (custom-homun-ai, CHAI_BUILD 2.3.0+) owns everything expressible in pure Lua — the V_SKILL_TARGET / V_AGGRESSOR GetV shadow and the chaiGetMsg / chaiGetResMsg mailbox readers — so it runs with or without this plugin, and on the official client. What only JS can do stays here : NOTIFY_SKILL* / NOTIFY_ACT* observers that FILL _G.CHAI_OWNER_SKILL_TARGET (master's most-recent skill cast target, 3s TTL) and _G.CHAI_AGGRESSOR (master's most-recent attack target, 4s TTL) on packet receipt (no setInterval since 1.1.0), and a workaround for the AIDriver.SkillObject range bug (the engine compares a SQUARED distance against a linear range, so a skill only fires within ~sqrt(range) cells). Without the plugin those globals stay 0, every read degrades to "nothing known" and the AI falls back to its pure-Lua scans. Exposes `window.__RO_HomunAIShim` (apply, startAggroPolling, stopAggroPolling, PREAMBLE) for consumer plugins like custom-homun-ai. Note : `opts.defensive` and `opts.whitelist` are deprecated since 1.1.0 — consumers should run a pure-Lua GetActors() scan in their own AI source instead. Targets cyro.live pre-renewal.
+// @match        *://*.cyro.live/*
+// @match        *://cyro.live/*
+// @run-at       document-start
+// @grant        unsafeWindow
+// @updateURL    https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/homun-ai-shim/1.2.0-a.1/homun-ai-shim.user.js
+// @downloadURL  https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/homun-ai-shim/1.2.0-a.1/homun-ai-shim.user.js
+// ==/UserScript==
+
+(async function () {
+	'use strict'
+	const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window
+
+	// Bootstrap-level dedup — same flag scheme as legacy plugins so a v2/v3
+	// install of the same plugin never double-runs.
+	const FLAG = '__RO_plugin_loaded_HomunAIShim_v3'
+	if (W[FLAG]) { return }
+	W[FLAG] = true
+
+	/* ============================================================
+	 * Plugin source — real JS, inspectable in the Tampermonkey editor.
+	 * Self-contained ES module body (esbuild bundle) ; `@robrowser/*`
+	 * static imports have been rewritten to top-level
+	 * `await import('@robrowser/*')` by the V3 builder so they fit
+	 * inside an `async function` declaration. The source file itself
+	 * stays plain ESM (consumable by Vite or any browser with the right
+	 * import map).
+	 *
+	 * NOTE : this function is NEVER called. Its body is extracted via
+	 * `.toString()`, reshaped from `return { he }` into
+	 * `export default he`, and loaded via Blob URL so the module
+	 * runs in PAGE context (same realm as PluginManager and libs).
+	 * ============================================================ */
+	async function pluginCode() {
+		var F=Object.defineProperty;var o=(e,t)=>F(e,"name",{value:t,configurable:!0});const { AIDriver: G, ChatBox: B } = await import("@robrowser/plugin-api");const { once: V, EVENTS: $ } = await import("@robrowser/event-bus");const { registerCleanup: q } = await import("@robrowser/lifecycle");var R={name:"HomunAIShim",version:"1.2.0-a.1",description:"Optional reactivity layer for the native AIDriver.HO_AI Lua VM. The AI source itself (custom-homun-ai, CHAI_BUILD 2.3.0+) owns everything expressible in pure Lua \u2014 the V_SKILL_TARGET / V_AGGRESSOR GetV shadow and the chaiGetMsg / chaiGetResMsg mailbox readers \u2014 so it runs with or without this plugin, and on the official client. What only JS can do stays here : NOTIFY_SKILL* / NOTIFY_ACT* observers that FILL _G.CHAI_OWNER_SKILL_TARGET (master's most-recent skill cast target, 3s TTL) and _G.CHAI_AGGRESSOR (master's most-recent attack target, 4s TTL) on packet receipt (no setInterval since 1.1.0), and a workaround for the AIDriver.SkillObject range bug (the engine compares a SQUARED distance against a linear range, so a skill only fires within ~sqrt(range) cells). Without the plugin those globals stay 0, every read degrades to \"nothing known\" and the AI falls back to its pure-Lua scans. Exposes `window.__RO_HomunAIShim` (apply, startAggroPolling, stopAggroPolling, PREAMBLE) for consumer plugins like custom-homun-ai. Note : `opts.defensive` and `opts.whitelist` are deprecated since 1.1.0 \u2014 consumers should run a pure-Lua GetActors() scan in their own AI source instead. Targets cyro.live pre-renewal.",match:["*://*.cyro.live/*","*://cyro.live/*"],deps:[],pars:{}};var c="1.2.0-a.1",S=`
+		-- ===== HomunAIShim preamble v${c} =====
+		_G.CHAI_SHIM_BUILD = "${c}"
+
+		-- The AI reads its manual orders through GetMsgJS / GetResMsgJS (the native
+		-- Lua wrappers are broken on cyro's Wasmoon). If AIDriver.addCTX never ran, or
+		-- the bundle renamed the binding, Alt+RClick silently no-ops \u2014 say so once.
+		if type(GetMsgJS) ~= "function" or type(GetResMsgJS) ~= "function" then
+		  if type(chaiDevLog) == "function" then
+		    chaiDevLog("error", "preamble: GetMsgJS/GetResMsgJS not exposed - Alt+RClic will silently no-op")
+		  end
+		end
+		`;const { AIDriver: u, PACKET: s, SkillTargetSelection: A } = await import("@robrowser/plugin-api");const { observePacket: C } = await import("@robrowser/packet-observer");const { devLog: H } = await import("@robrowser/dev-log");var U=4e3,W=3e3,p=0,P=!1,M=!1,d=!1,g=[],T=0,f=null,y=0,m=null,J=700,h={};function E(e,t,a){let i=e+":"+a,n=Date.now();h[i]&&n-h[i]<J||(h[i]=n,H("debug","chai",e,{[t]:a},{file:"ai"}))}o(E,"logMasterAct");function k(e){p=Number(e)|0}o(k,"setOwnerGID");function O(e){P=!!e}o(O,"setPreemptive");function L(e){M=!!e}o(L,"setSkillTargetPickup");function v(){f&&(clearTimeout(f),f=null),T=0;let e=u&&u.HO_AI||null;if(e&&typeof e.doStringSync=="function")try{e.doStringSync("_G.CHAI_AGGRESSOR = 0")}catch{}}o(v,"clearAggressor");function w(){m&&(clearTimeout(m),m=null),y=0;let e=u&&u.HO_AI||null;if(e&&typeof e.doStringSync=="function")try{e.doStringSync("_G.CHAI_OWNER_SKILL_TARGET = 0")}catch{}}o(w,"clearOwnerSkillTarget");function D(e,t,a,i,n){if(!t||t<=0)return{value:i,timer:n};if(t===i)return{value:i,timer:n};let r=u&&u.HO_AI||null;if(!r||typeof r.doStringSync!="function")return{value:i,timer:n};try{r.doStringSync("_G."+e+" = "+t)}catch{}n&&clearTimeout(n);let l=setTimeout(()=>{e==="CHAI_AGGRESSOR"?v():e==="CHAI_OWNER_SKILL_TARGET"&&w()},a);return{value:t,timer:l}}o(D,"_markChannel");function b(e){if(!P)return;let t=D("CHAI_AGGRESSOR",e,U,T,f);T=t.value,f=t.timer}o(b,"_markAggressor");function j(e){if(!M)return;let t=D("CHAI_OWNER_SKILL_TARGET",e,W,y,m);y=t.value,m=t.timer}o(j,"_markOwnerSkillTarget");function _(){if(d)return;let e=o(n=>{if(!n)return;let r=n.GID||n.AID,l=n.targetGID||n.targetID;r===p?l&&l>0&&(E("master_attack","target",l),b(l)):l===p&&r&&r>0&&E("master_hit_by","attacker",r)},"onMasterAct"),t=o(n=>{if(!n||n.AID!==p)return;let r=n.targetID;!r||r<=0||(H("debug","chai","master_skill_cast",{skid:n.SKID,target:r,aid:n.AID},{file:"ai"}),b(r),j(r))},"onMasterSkill"),a=[s&&s.ZC&&s.ZC.NOTIFY_ACT,s&&s.ZC&&s.ZC.NOTIFY_ACT2,s&&s.ZC&&s.ZC.NOTIFY_ACT3].filter(Boolean),i=[s&&s.ZC&&s.ZC.NOTIFY_SKILL,s&&s.ZC&&s.ZC.NOTIFY_SKILL2,s&&s.ZC&&s.ZC.NOTIFY_SKILL_POSITION].filter(Boolean);for(let n of a)try{let r=C(n,e);typeof r=="function"&&g.push(r)}catch{}for(let n of i)try{let r=C(n,t);typeof r=="function"&&g.push(r)}catch{}d=!0}o(_,"installPacketHooks");function N(){for(;g.length;){let e=g.pop();try{e()}catch{}}d=!1}o(N,"uninstallPacketHooks");function x(e){return!e||!e.global||typeof e.global.set!="function"||!A||typeof A.onUseSkillToId!="function"?!1:(e.global.set("SkillObject",(t,a,i,n)=>{try{return A.onUseSkillToId(Number(i),Number(a),Number(n)),1}catch(r){return console.warn("[HomunAIShim] SkillObject route failed",r),0}}),!0)}o(x,"patchSkillObject");var K=!1;function Z(e,t){I();let a=Number(e)|0;if(!a)return;let i=t||{};(i.defensive||i.whitelist)&&!K&&(K=!0,console.warn("[HomunAIShim] opts.defensive / opts.whitelist deprecated since 1.1.0 \u2014 defensive aggro + whitelist are now Lua-native (see custom-homun-ai presets.js). Ignoring."));let n=!!i.preemptive,r=!!i.skillTargetPickup;!n&&!r||(k(a),O(n),L(r),_())}o(Z,"startAggroPolling");function I(){k(0),O(!1),L(!1),v(),w()}o(I,"stopAggroPolling");function Q(){if(!G||G.ready!==!0)return null;let e=G.HO_AI;return!e||typeof e.doStringSync!="function"?null:e}o(Q,"getHOAIVM");function X(e){let t=Q();if(!t)return{ok:!1,reason:"vm-not-ready"};try{t.doStringSync(S+`
+		`+e)}catch(a){return{ok:!1,reason:"lua-error",error:a}}return x(t),{ok:!0}}o(X,"apply");function z(){let e=null,t=V($.MAP_ENTER,()=>{e=setTimeout(()=>{e=null,_(),B.addText("[HomunAIShim] loaded v"+c,B.TYPE.BLUE)},500)});return typeof window<"u"&&(window.__RO_HomunAIShim={version:c,SHIM_BUILD:c,apply:X,startAggroPolling:Z,stopAggroPolling:I,PREAMBLE:S}),q(({reason:a})=>{try{t()}catch{}e&&(clearTimeout(e),e=null);try{I()}catch{}try{N()}catch{}typeof window<"u"&&window.__RO_HomunAIShim&&delete window.__RO_HomunAIShim}),!0}o(z,"Init");var he={...R,init:z};return { he }
+	}
+
+	// Reshape body to a self-contained ES module string.
+	//   1. Detach the inline sourcemap if present (esbuild puts it at the
+	//      end of the bundle, AFTER our `return { he }`). If we
+	//      leave it in place the next regex would never see `}` at end of
+	//      string and the swap would silently fail — module would have a
+	//      top-level `return` and crash with SyntaxError on Blob import.
+	//   2. Swap `return { he }` → nothing, then append
+	//      `export default he` so the module's default export is
+	//      the manifest object PluginManager wants.
+	//   3. Re-attach the sourcemap LAST so DevTools can map the bundle to
+	//      original src/* files.
+	const src = pluginCode.toString()
+	const rawBody = src.slice(src.indexOf('{') + 1, src.lastIndexOf('}'))
+	let body = rawBody
+	let sourceMappingComment = ''
+	const smMatch = body.match(/\n?[ \t]*\/\/# sourceMappingURL=[^\n]*/)
+	if (smMatch) {
+		sourceMappingComment = smMatch[0].trim()
+		body = body.slice(0, smMatch.index) + body.slice(smMatch.index + smMatch[0].length)
+	}
+	// Match any identifier (not the literal EXPORT name) : minified export
+	// names can contain `$`, a regex metachar that would break interpolation.
+	// The reshaped body ends with exactly one trailing `return { … }`.
+	body = body.replace(/\s*return\s*\{\s*[\w$]+\s*\}\s*$/, '')
+	const moduleSource = body
+		+ '\nexport default he\n'
+		+ '//# sourceURL=HomunAIShim.js\n'
+		+ (sourceMappingComment ? sourceMappingComment + '\n' : '')
+
+	const blob = new Blob([moduleSource], { type: 'application/javascript' })
+	const blobUrl = URL.createObjectURL(blob)
+
+	try {
+		// Poll for the framework's TM_READY barrier to EXIST. Install order
+		// safety : the plugin TM userscript may load before the framework
+		// userscript, in which case W.__ROBROWSER_TM_READY is undefined and
+		// `await undefined` resolves immediately — then the canonical
+		// import of @robrowser/plugin-api would fail because the import map
+		// hasn't been installed yet.
+		let tries = 0
+		while (!W.__ROBROWSER_TM_READY) {
+			if (++tries > 100) {
+				console.error(`[HomunAIShim] framework not present after 10s — install ro-framework.user.js first`)
+				return
+			}
+			await new Promise(r => setTimeout(r, 100))
+		}
+		// Wait for the signal — forward-compat : we IGNORE its resolved
+		// value (v0 resolves with the pluginApi module ; v1 may change or
+		// remove that). Our code only relies on the "import map ready"
+		// semantics that the await provides.
+		await W.__ROBROWSER_TM_READY
+
+		// Canonical import via the @robrowser/plugin-api specifier. The
+		// ES module cache returns the same singleton bootstrap landed on
+		// ROFramework.PluginManager (used by console / diagnose).
+		const { PluginManager } = await import('@robrowser/plugin-api')
+		const mod = await import(blobUrl)              // page context, body manifest
+		PluginManager.register(mod.default)            // unified registration
+	} catch (e) {
+		console.error(`[HomunAIShim] PluginManager.register failed:`, e)
+	}
+})()

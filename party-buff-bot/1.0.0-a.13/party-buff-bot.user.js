@@ -1,0 +1,159 @@
+// ==UserScript==
+// @name         RO Plugin v3 — PartyBuffBot
+// @namespace    robrowser
+// @version      1.0.0-a.13
+// @description  Support bot — auto-casts Priest buffs (Blessing / Increase AGI / Magnificat / Gloria) and auto-heals party members (+ their Alchemist homunculus, + yourself) up to full HP. Buff state is tracked per-member from ZC_MSG_STATE_CHANGE packets (on-screen members only); heal is driven by ZC_NOTIFY_HP_TO_GROUPM. Window toggle via /buffbot. Job auto-detected (Priest family).
+// @match        *://*.cyro.live/*
+// @match        *://cyro.live/*
+// @run-at       document-start
+// @grant        unsafeWindow
+// @updateURL    https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/party-buff-bot/1.0.0-a.13/party-buff-bot.user.js
+// @downloadURL  https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/party-buff-bot/1.0.0-a.13/party-buff-bot.user.js
+// ==/UserScript==
+
+(async function () {
+	'use strict'
+	const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window
+
+	// Bootstrap-level dedup — same flag scheme as legacy plugins so a v2/v3
+	// install of the same plugin never double-runs.
+	const FLAG = '__RO_plugin_loaded_PartyBuffBot_v3'
+	if (W[FLAG]) { return }
+	W[FLAG] = true
+
+	/* ============================================================
+	 * Plugin source — real JS, inspectable in the Tampermonkey editor.
+	 * Self-contained ES module body (esbuild bundle) ; `@robrowser/*`
+	 * static imports have been rewritten to top-level
+	 * `await import('@robrowser/*')` by the V3 builder so they fit
+	 * inside an `async function` declaration. The source file itself
+	 * stays plain ESM (consumable by Vite or any browser with the right
+	 * import map).
+	 *
+	 * NOTE : this function is NEVER called. Its body is extracted via
+	 * `.toString()`, reshaped from `return { Pt }` into
+	 * `export default Pt`, and loaded via Blob URL so the module
+	 * runs in PAGE context (same realm as PluginManager and libs).
+	 * ============================================================ */
+	async function pluginCode() {
+		var ke=Object.defineProperty;var s=(e,t)=>ke(e,"name",{value:t,configurable:!0});const { UIComponent: Qe, Commands: Pe, ChatBox: Oe, Session: Xe, PACKET: K } = await import("@robrowser/plugin-api");const { on: et, once: re, EVENTS: H } = await import("@robrowser/event-bus");const { registerCleanup: tt } = await import("@robrowser/lifecycle");const j = await import("@robrowser/ui");var J={name:"PartyBuffBot",version:"1.0.0-a.13",description:"Support bot \u2014 auto-casts Priest buffs (Blessing / Increase AGI / Magnificat / Gloria) and auto-heals party members (+ their Alchemist homunculus, + yourself) up to full HP. Buff state is tracked per-member from ZC_MSG_STATE_CHANGE packets (on-screen members only); heal is driven by ZC_NOTIFY_HP_TO_GROUPM. Window toggle via /buffbot. Job auto-detected (Priest family).",match:["*://*.cyro.live/*","*://cyro.live/*"],deps:["@robrowser/ui","@robrowser/event-bus","@robrowser/packet-observer","@robrowser/lifecycle","@robrowser/dev-log"],pars:{}};var v=[{key:"heal",label:"Heal (auto full)",skid:28,constKey:"AL_HEAL",type:"heal",maxLevel:10,homun:!0,castMin:0},{key:"blessing",label:"Blessing",skid:34,constKey:"AL_BLESSING",type:"buff",efst:10,maxLevel:10,homun:!0,duration:2e5,castMin:0},{key:"incAgi",label:"Increase AGI",skid:29,constKey:"AL_INCAGI",type:"buff",efst:12,maxLevel:10,homun:!0,duration:18e4,castMin:900},{key:"magnificat",label:"Magnificat",skid:74,constKey:"PR_MAGNIFICAT",type:"aoebuff",efst:20,maxLevel:5,duration:9e4,castMin:4500},{key:"gloria",label:"Gloria",skid:75,constKey:"PR_GLORIA",type:"aoebuff",efst:21,maxLevel:5,duration:3e4,castMin:0}],ae={8:1,4009:1,4031:1,4057:1,4063:1,4099:1,4129:1,4156:1,4157:1,4174:1,4194:1},z={18:1,4019:1,4041:1,4071:1,4078:1,4107:1,4121:1,4180:1},fe="RO_PartyBuffBot_cfg";function Y(){return{enabled:!1,self:!0,homun:!0,castDelay:150,rebuffEmote:42,skills:{heal:{on:!0,level:10},blessing:{on:!0,level:10},incAgi:{on:!0,level:10},magnificat:{on:!1,level:5},gloria:{on:!1,level:5}}}}s(Y,"defaultConfig");function Re(e){let t=Y();if(!e||typeof e!="object")return t;t.self=e.self!==!1,t.homun=e.homun!==!1,typeof e.castDelay=="number"&&e.castDelay>=0&&(t.castDelay=e.castDelay),typeof e.rebuffEmote=="number"&&e.rebuffEmote>=0&&e.rebuffEmote!==41&&(t.rebuffEmote=e.rebuffEmote);let n=e.skills||{};for(let o in t.skills){let r=n[o];r&&typeof r=="object"&&(t.skills[o].on=!!r.on,typeof r.level=="number"&&r.level>0&&(t.skills[o].level=r.level))}return t}s(Re,"mergeDefaults");function ue(){try{let e=localStorage.getItem(fe);return e?Re(JSON.parse(e)):Y()}catch(e){return console.warn("[PartyBuffBot] loadConfig:",e),Y()}}s(ue,"loadConfig");function _(e){try{localStorage.setItem(fe,JSON.stringify(e))}catch(t){console.warn("[PartyBuffBot] saveConfig:",t)}}s(_,"saveConfig");const { observePacket: we } = await import("@robrowser/packet-observer");const { PACKET: Ne } = await import("@robrowser/plugin-api");var h={};function V(e){for(let t in h)delete h[t];if(e)for(let t=0,n=e.length;t<n;++t){let o=e[t];o&&o.AID&&(h[o.AID]={name:o.characterName})}}s(V,"setRoster");function G(e){e&&e.AID&&(h[e.AID]={name:e.characterName})}s(G,"addMember");function Ue(e){e&&e.AID&&delete h[e.AID]}s(Ue,"delMember");function W(e){e&&e.AID&&!h[e.AID]&&(h[e.AID]={name:"?"})}s(W,"seedMember");function ce(){let e=[];for(let t in h)e.push(+t);return e}s(ce,"getMemberAIDs");function Q(e){return h[e]!=null}s(Q,"isMember");var y={},Ke=46,He=112,pe=0;function X(){return pe}s(X,"getAcdUntil");function D(e){let t=e.AID,n=e.index;if(t==null||n==null)return;if(n===Ke||n===He){let l=typeof e.RemainMS=="number"&&e.RemainMS>0?e.RemainMS:typeof e.TotalMS=="number"&&e.TotalMS>0?e.TotalMS:0;l>0&&(pe=Date.now()+l);return}let o="state"in e?e.state!==0:!0,r=y[t];if(r||(r=y[t]={}),!o){delete r[n];return}let i=typeof e.RemainMS=="number"&&e.RemainMS>0?e.RemainMS:typeof e.TotalMS=="number"&&e.TotalMS>0?e.TotalMS:null;r[n]={active:!0,expiresAt:i!=null?Date.now()+i:null}}s(D,"onStateChange");function B(e,t,n){let o=y[e],r=o&&o[t];return!r||!r.active||r.expiresAt!=null&&Date.now()>=r.expiresAt-n}s(B,"isBuffMissing");function ee(e){delete y[e]}s(ee,"resetBuffs");function I(e,t){let n=y[e],o=n&&n[t];return!o||!o.active?null:o.expiresAt==null?-1:Math.max(0,o.expiresAt-Date.now())}s(I,"getBuffRemaining");function be(){for(let e in y)delete y[e]}s(be,"resetAllBuffs");function de(e,t,n){if(e==null||t==null||!(n>0))return;let o=y[e];o||(o=y[e]={}),o[t]={active:!0,expiresAt:Date.now()+n}}s(de,"rememberCast");function me(e){let t=Ne.ZC,n=s((o,r)=>{if(!o)return;let i=we(o,r);i&&e.push(i)},"sub");n(t.GROUP_LIST,o=>V(o.groupInfo)),n(t.GROUP_LIST2,o=>V(o.groupInfo)),n(t.GROUP_LIST3,o=>V(o.groupInfo)),n(t.ADD_MEMBER_TO_GROUP,G),n(t.ADD_MEMBER_TO_GROUP2,G),n(t.ADD_MEMBER_TO_GROUP3,G),n(t.ADD_MEMBER_TO_GROUP4,G),n(t.DELETE_MEMBER_FROM_GROUP,Ue),n(t.NOTIFY_HP_TO_GROUPM,W),n(t.NOTIFY_HP_TO_GROUPM_R2,W),n(t.NOTIFY_POSITION_TO_GROUPM,W),n(t.MSG_STATE_CHANGE,D),n(t.MSG_STATE_CHANGE2,D),n(t.MSG_STATE_CHANGE3,D),n(t.MSG_STATE_CHANGE4,D),n(t.MSG_STATE_CHANGE5,D)}s(me,"hookTrackers");function ge(){return{members:{...h},buffs:JSON.parse(JSON.stringify(y))}}s(ge,"_snapshot");const { Session: d, EntityManager: x, SkillConst: he, SkillTargetSelection: ye, PACKET: m, UIManager: Ze } = await import("@robrowser/plugin-api");const { observePacket: ve, observeSendPacket: qe } = await import("@robrowser/packet-observer");const { devLog: M } = await import("@robrowser/dev-log");var R=8,je=150,Fe=9,Me=8,k=5e3,xe=4e3,$e=300,C=null,c=null,E={},w={},ne=null,Ee=0,P=0;function N(){let e=d.Entity;return!!(e&&ae[e._job])}s(N,"isPriest");function oe(){let e=d.GID,t=d.AID;return e!=null&&t!=null?e+":"+t:null}s(oe,"currentCharKey");function ie(e){c&&(c.enabled=!!e,ne=e?oe():null)}s(ie,"setBotEnabled");function se(e,t){return Math.max(Math.abs(e[0]-t[0]),Math.abs(e[1]-t[1]))}s(se,"cheby");function L(e,t){return t===e||se(e.position,t.position)<=Fe}s(L,"inRange");function _e(e,t,n){for(let o=0;o<t.length;++o){let r=t[o];if(r===n)continue;let i=x.get(r);if(i&&i.position&&L(e,i)&&U(i))return!0}return!1}s(_e,"anyOtherMemberNear");function Je(e){return he&&he[e.constKey]||e.skid}s(Je,"skidOf");function Ie(e){return Math.max(c&&c.castDelay||0,e.castMin||0)}s(Ie,"busyFor");function U(e){let t;try{t=Ze.getComponent("PartyFriends")}catch{t=null}if(!t||typeof t.isGroupMember!="function")return!0;let n=e&&e.display&&e.display.name;return n?t.isGroupMember(n):!1}s(U,"isRealMember");function Ye(e){let t=e&&e.life;return!!(t&&t.hp>=0&&t.hp_max>0&&t.hp<t.hp_max)}s(Ye,"needsHeal");function Se(e,t,n,o,r){let i=n+":"+e,l=Date.now();return E[i]&&l-E[i]<o||typeof ye.onUseSkillToId!="function"?!1:(E[i]=l,P=l+(r||0),M("info","pbb","cast",{skid:e,level:t,gid:n,self:n===(d.Entity&&d.Entity.GID)},{file:"pbb"}),ye.onUseSkillToId(e,t,n),!0)}s(Se,"tryCast");function ze(e,t){let n=[],o={},r=s(l=>{l&&l.GID&&l.position&&!o[l.GID]&&(o[l.GID]=1,n.push(l))},"push");d.homunId&&r(x.get(d.homunId));let i=[];for(let l=0;l<t.length;++l){let a=x.get(t[l]);a&&a.position&&z[a._job]&&U(a)&&i.push(a)}return i.length&&x.forEach(l=>{if(!(l.objecttype!==R||!l.position)){for(let a=0;a<i.length;++a)if(se(l.position,i[a].position)<=Me){r(l);break}}}),n}s(ze,"resolveHomuns");function Ve(){if(!c||!c.enabled)return;if(oe()!==ne){c.enabled=!1,ne=null;return}let e=d.Entity;if(!e||!e.position||!N())return;let t=e.GID,n=ce(),o={};for(let a=0;a<n.length;++a){let f=n[a],u=!!x.get(f);o[f]=u,!u&&w[f]&&ee(f)}w=o;let r=[];c.self&&r.push({gid:t,ent:e});for(let a=0;a<n.length;++a){let f=n[a];if(f===t)continue;let u=x.get(f);u&&u.position&&L(e,u)&&U(u)&&r.push({gid:u.GID,ent:u})}if(c.homun){let a=ze(e,n);for(let f=0;f<a.length;++f){let u=a[f];L(e,u)&&r.push({gid:u.GID,ent:u})}}let i=Date.now();if(i-Ee>2e3){Ee=i;let a=[];for(let u=0;u<n.length;++u){let T=n[u],p=x.get(T);a.push({aid:T,found:!!p,name:p&&p.display?p.display.name:null,real:p?U(p):null,job:p?p._job:null,pos:p&&p.position?[p.position[0]|0,p.position[1]|0]:null,inRange:p&&p.position?L(e,p):!1,bless:p?I(p.GID,10):null,agi:p?I(p.GID,12):null})}let f={};for(let u in c.skills)f[u]=c.skills[u].on;M("info","pbb","tick",{charKey:oe(),isPriest:N(),self:c.self,selfPos:[e.position[0]|0,e.position[1]|0],homunId:d.homunId||0,rosterCount:n.length,members:a,targets:r.map(u=>({gid:u.gid,hom:u.ent.objecttype===R})),skillsOn:f,busyMs:Math.max(0,P-i),acdMs:Math.max(0,X()-i),castDelay:c.castDelay,aoe:{otherNear:_e(e,n,t),magMissing:B(t,20,k),gloMissing:B(t,21,k)},selfRemain:{bless:I(t,10),agi:I(t,12),mag:I(t,20),glo:I(t,21)}},{file:"pbb"})}let l=Date.now();if(!(l<X()||l<P))for(let a=0;a<v.length;++a){let f=v[a],u=c.skills[f.key];if(!u||!u.on)continue;let T=Je(f),p=u.level||f.maxLevel;if(f.type==="aoebuff"){if(!c.self&&!_e(e,n,t))continue;if(B(t,f.efst,k)&&Se(T,p,t,xe,Ie(f)))return;continue}let F=f.type==="heal";for(let $=0;$<r.length;++$){let A=r[$];if((F?Ye(A.ent):B(A.gid,f.efst,k))&&Se(T,p,A.gid,F?$e:xe,Ie(f))){!F&&A.ent.objecttype===R&&de(A.gid,f.efst,f.duration);return}}}}s(Ve,"tick");function Te(e){c=e,C||(C=setInterval(Ve,je))}s(Te,"startBot");function Ae(){P=0,w={};for(let e in E)delete E[e]}s(Ae,"resetRuntime");function De(){C&&(clearInterval(C),C=null),w={},P=0;for(let e in E)delete E[e]}s(De,"stopBot");function te(e){if(e==null)return;ee(e);let t=e+":";for(let n in E)n.indexOf(t)===0&&delete E[n]}s(te,"_rebuffOne");function We(e){if(e==null)return;te(e);let t=d.Entity,n=t&&t.GID;if(e===n){d.homunId&&te(d.homunId);return}let o=x.get(e);o&&o.position&&z[o._job]&&x.forEach(r=>{r.objecttype===R&&r.position&&se(r.position,o.position)<=Me&&te(r.GID)})}s(We,"forceRebuff");function Be(e){let t=s((n,o)=>{if(!n)return;let r=qe(n,i=>{M("info","pbb","send",{tag:o,SKID:i.SKID,target:i.targetID,dest:i.dest},{file:"pbb"})});r&&e.push(r)},"sub");if(t(m.CZ.USE_SKILL2,"useskill2"),t(m.CZ.USE_SKILL,"useskill"),t(m.CZ.REQUEST_MOVE2,"move2"),t(m.CZ.REQUEST_MOVE,"move"),m.ZC&&m.ZC.ACK_TOUSESKILL){let n=ve(m.ZC.ACK_TOUSESKILL,o=>{o.result===0&&M("info","pbb","skill-fail",{SKID:o.SKID,cause:o.cause},{file:"pbb"})});n&&e.push(n)}}s(Be,"hookSends");function Ce(e){if(!m||!m.ZC||!m.ZC.EMOTION)return!1;let t=ve(m.ZC.EMOTION,n=>{let o=d.Entity,r=o&&o.GID;if(M("info","pbb","emote-rx",{gid:n.GID,type:n.type,want:c&&c.rebuffEmote,enabled:!!(c&&c.enabled),isSelf:n.GID===r,isMember:Q(n.GID)},{file:"pbb"}),!c||!c.enabled)return;let i=c.rebuffEmote;if(!i||n.type!==i)return;let l=n.GID,a=d.Entity,f=a&&a.GID;l!==f&&!Q(l)||(We(l),M("info","pbb","rebuff-emote",{gid:l,type:n.type,self:l===f},{file:"pbb"}))});return t&&e.push(t),!0}s(Ce,"hookEmote");var nt=J.version,g=null,Ge=null,S=null,b=null,le=null,O=[],Z=[];function ot(){le&&(le.checked=!!(b&&b.enabled))}s(ot,"syncMaster");var it=v.map(e=>`
+					<div class="pbb-skill">
+						<label class="pbb-flag" title="${e.label}">
+							<input type="checkbox" data-skill="${e.key}">
+							<span class="pbb-flag-label">${e.label}</span>
+						</label>
+						<input class="pbb-level" type="number" min="1" max="${e.maxLevel}" data-level="${e.key}" title="Cast level">
+					</div>`).join(""),st=`
+		<div class="pbb-panel">
+			<div class="pbb-header">
+				<span class="pbb-title">Party Buff Bot <span class="pbb-version">v${nt}</span></span>
+				<button type="button" class="pbb-win-btn pbb-close" title="Close">x</button>
+			</div>
+			<div class="pbb-body">
+				<label class="pbb-master">
+					<input type="checkbox" data-master>
+					<span>Bot actif</span>
+				</label>
+				<div class="pbb-status" data-status>Classe : \u2014</div>
+				<div class="pbb-grid">
+		${it}
+				</div>
+				<label class="pbb-opt"><input type="checkbox" data-opt="self"><span>Me buffer / heal aussi</span></label>
+				<label class="pbb-opt"><input type="checkbox" data-opt="homun"><span>Buffer / heal les homunculus</span></label>
+				<div class="pbb-skill pbb-emote">
+					<label class="pbb-flag-label" for="pbb-emote">Rebuff sur emote (/mp=42, 0=off)</label>
+					<input class="pbb-level" id="pbb-emote" type="number" min="0" data-emote title="ZC_EMOTION id \u2014 l'\xE9metteur (toi ou un membre) est rebuff\xE9 + son homun">
+				</div>
+				<div class="pbb-skill pbb-emote">
+					<label class="pbb-flag-label" for="pbb-castdelay">D\xE9lai post-cast (ms) \u2014 l'ACD r\xE9el serveur prime</label>
+					<input class="pbb-level" id="pbb-castdelay" type="number" min="0" data-castdelay title="Plancher entre 2 casts ; le vrai after-cast delay re\xE7u du serveur (status bar) est appliqu\xE9 en plus">
+				</div>
+				<div class="pbb-hint">Activation par perso \u2014 remise \xE0 z\xE9ro \xE0 chaque login. Ne cible que les membres \xE0 port\xE9e visuelle (le status buff n'arrive que pour les entit\xE9s \xE0 l'\xE9cran). Job auto-d\xE9tect\xE9.</div>
+			</div>
+		</div>
+		`.trim(),rt=`
+		.pbb-panel { position: absolute; top: 120px; right: 10px; background: rgba(20,30,50,0.92); border: 1px solid #4af; border-radius: 4px; color: #fff; font-family: Arial, sans-serif; font-size: 11px; width: 230px; text-shadow: 1px 1px 0 #000; box-shadow: 0 2px 8px rgba(0,0,0,0.6); display: flex; flex-direction: column; user-select: none; }
+		.pbb-header { background: linear-gradient(180deg, #4af, #26a); padding: 4px 6px 4px 8px; font-weight: bold; border-radius: 3px 3px 0 0; cursor: move; display: flex; align-items: center; }
+		.pbb-title { flex: 1; }
+		.pbb-version { font-size: 9px; opacity: 0.7; font-weight: normal; margin-left: 4px; }
+		.pbb-win-btn { width: 18px; height: 18px; line-height: 1; text-align: center; padding: 0; margin-left: 4px; border-radius: 2px; background: rgba(40,60,100,0.9); border: 1px solid #4af; color: #fff; font-family: inherit; font-size: 11px; font-weight: bold; cursor: pointer; text-shadow: 1px 1px 0 #000; }
+		.pbb-close:hover { background: rgba(200,60,60,0.95); border-color: #e88; }
+		.pbb-body { padding: 8px; }
+		.pbb-master { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: bold; margin-bottom: 6px; }
+		.pbb-status { font-size: 10px; color: #9cf; margin-bottom: 8px; padding: 2px 4px; background: rgba(40,60,100,0.4); border-radius: 2px; }
+		.pbb-status[data-bad] { color: #f99; }
+		.pbb-grid { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; padding: 6px 8px; background: rgba(40,60,100,0.4); border: 1px solid rgba(74,170,255,0.4); border-radius: 3px; }
+		.pbb-skill { display: flex; align-items: center; gap: 6px; }
+		.pbb-flag { display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; min-width: 0; }
+		.pbb-flag input[type=checkbox] { margin: 0; cursor: pointer; }
+		.pbb-flag-label { color: #cce; font-size: 11px; line-height: 1.2; }
+		.pbb-level { width: 38px; flex: 0 0 auto; background: rgba(20,30,50,0.9); border: 1px solid #4af; color: #fff; font-family: inherit; font-size: 10px; padding: 2px 3px; border-radius: 2px; text-align: center; }
+		.pbb-opt { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 1px 0; color: #cce; }
+		.pbb-opt input[type=checkbox] { margin: 0; cursor: pointer; }
+		.pbb-hint { color: #aaa; font-size: 9px; line-height: 1.3; margin-top: 6px; }
+		`;function q(e){let t=e&&e.querySelector("[data-status]");t&&(Xe.Entity?N()?(t.textContent="Classe : Priest \u2713 \u2014 actif",t.removeAttribute("data-bad")):(t.textContent="Classe : non-Priest \u2014 bot inactif",t.setAttribute("data-bad","")):(t.textContent="Classe : \u2014",t.setAttribute("data-bad","")))}s(q,"refreshStatus");function lt(){return document.querySelectorAll(".pbb-panel").forEach(e=>e.remove()),g=new Qe("PartyBuffBot",st,rt),Ge=s(function(){let e=g.ui&&g.ui[0];if(!e)return;j.makeDraggable(g,".pbb-header");let t=e.querySelector(".pbb-close");t&&t.addEventListener("click",()=>{S&&S.hide()});let n=e.querySelector("[data-master]");n&&(le=n,n.checked=!!b.enabled,n.addEventListener("change",()=>{ie(n.checked),_(b),q(e)}));for(let i of v){let l=b.skills[i.key],a=e.querySelector(`[data-skill="${i.key}"]`),f=e.querySelector(`[data-level="${i.key}"]`);a&&(a.checked=!!l.on,a.addEventListener("change",()=>{l.on=a.checked,_(b)})),f&&(f.value=l.level,f.addEventListener("change",()=>{let u=parseInt(f.value,10);u>0||(u=i.maxLevel),u>i.maxLevel&&(u=i.maxLevel),l.level=u,f.value=u,_(b)}))}for(let i of["self","homun"]){let l=e.querySelector(`[data-opt="${i}"]`);l&&(l.checked=!!b[i],l.addEventListener("change",()=>{b[i]=l.checked,_(b)}))}let o=e.querySelector("[data-emote]");o&&(o.value=b.rebuffEmote,o.addEventListener("change",()=>{let i=parseInt(o.value,10);i>=0||(i=0),b.rebuffEmote=i,o.value=i,_(b)}));let r=e.querySelector("[data-castdelay]");r&&(r.value=b.castDelay,r.addEventListener("change",()=>{let i=parseInt(r.value,10);i>=0||(i=0),b.castDelay=i,r.value=i,_(b)})),q(e)},"bindPanel"),g}s(lt,"buildPanel");function at(){let e=typeof window<"u"?window:globalThis;if(e.__PartyBuffBot_init)return!0;e.__PartyBuffBot_init=!0,b=ue(),Te(b);function t(){me(Z),Ce(Z),Be(Z)}s(t,"hook"),K&&K.ZC&&K.ZC.MSG_STATE_CHANGE&&K.ZC.GROUP_LIST?t():O.push(re(H.WIRE_COMPLETE,t)),S=j.registerPlayerWindow(()=>lt(),{persistKey:"PartyBuffBot",defaultVisible:!1,onMount:s(()=>{Ge?.(),Oe.addText("[PartyBuffBot] charg\xE9 \u2014 /buffbot pour ouvrir le panneau",Oe.TYPE.BLUE)},"onMount")}),O.push(re(H.MAP_ENTER,()=>{let o=g&&g.ui&&g.ui[0];o&&q(o)})),O.push(et(H.CHAR_ENTER,()=>{ie(!1),be(),Ae(),ot();let o=g&&g.ui&&g.ui[0];o&&q(o)}));function n(){Pe.add("buffbot","Toggle the Party Buff Bot panel",function(){S&&(S.isVisible()?(S.hide(),this.addText("[PartyBuffBot] cach\xE9",this.TYPE.BLUE)):(S.show(),this.addText("[PartyBuffBot] affich\xE9",this.TYPE.BLUE)))},["pbb"])}return s(n,"registerChatCommand"),Pe.$raw?n():O.push(re(H.MAP_ENTER,n)),tt(({reason:o})=>{De();for(let r of O.splice(0))try{r()}catch(i){console.warn("[PartyBuffBot] event off:",i)}for(let r of Z.splice(0))try{r()}catch(i){console.warn("[PartyBuffBot] packet off:",i)}e.__PartyBuffBot_init=!1,console.log("[PartyBuffBot] cleanup reason="+o)}),!0}s(at,"Init");typeof window<"u"&&(window.__RO_PartyBuffBot={getConfig:s(()=>b,"getConfig"),getState:s(()=>ge(),"getState")});var Pt={...J,init:at};return { Pt }
+	}
+
+	// Reshape body to a self-contained ES module string.
+	//   1. Detach the inline sourcemap if present (esbuild puts it at the
+	//      end of the bundle, AFTER our `return { Pt }`). If we
+	//      leave it in place the next regex would never see `}` at end of
+	//      string and the swap would silently fail — module would have a
+	//      top-level `return` and crash with SyntaxError on Blob import.
+	//   2. Swap `return { Pt }` → nothing, then append
+	//      `export default Pt` so the module's default export is
+	//      the manifest object PluginManager wants.
+	//   3. Re-attach the sourcemap LAST so DevTools can map the bundle to
+	//      original src/* files.
+	const src = pluginCode.toString()
+	const rawBody = src.slice(src.indexOf('{') + 1, src.lastIndexOf('}'))
+	let body = rawBody
+	let sourceMappingComment = ''
+	const smMatch = body.match(/\n?[ \t]*\/\/# sourceMappingURL=[^\n]*/)
+	if (smMatch) {
+		sourceMappingComment = smMatch[0].trim()
+		body = body.slice(0, smMatch.index) + body.slice(smMatch.index + smMatch[0].length)
+	}
+	// Match any identifier (not the literal EXPORT name) : minified export
+	// names can contain `$`, a regex metachar that would break interpolation.
+	// The reshaped body ends with exactly one trailing `return { … }`.
+	body = body.replace(/\s*return\s*\{\s*[\w$]+\s*\}\s*$/, '')
+	const moduleSource = body
+		+ '\nexport default Pt\n'
+		+ '//# sourceURL=PartyBuffBot.js\n'
+		+ (sourceMappingComment ? sourceMappingComment + '\n' : '')
+
+	const blob = new Blob([moduleSource], { type: 'application/javascript' })
+	const blobUrl = URL.createObjectURL(blob)
+
+	try {
+		// Poll for the framework's TM_READY barrier to EXIST. Install order
+		// safety : the plugin TM userscript may load before the framework
+		// userscript, in which case W.__ROBROWSER_TM_READY is undefined and
+		// `await undefined` resolves immediately — then the canonical
+		// import of @robrowser/plugin-api would fail because the import map
+		// hasn't been installed yet.
+		let tries = 0
+		while (!W.__ROBROWSER_TM_READY) {
+			if (++tries > 100) {
+				console.error(`[PartyBuffBot] framework not present after 10s — install ro-framework.user.js first`)
+				return
+			}
+			await new Promise(r => setTimeout(r, 100))
+		}
+		// Wait for the signal — forward-compat : we IGNORE its resolved
+		// value (v0 resolves with the pluginApi module ; v1 may change or
+		// remove that). Our code only relies on the "import map ready"
+		// semantics that the await provides.
+		await W.__ROBROWSER_TM_READY
+
+		// Canonical import via the @robrowser/plugin-api specifier. The
+		// ES module cache returns the same singleton bootstrap landed on
+		// ROFramework.PluginManager (used by console / diagnose).
+		const { PluginManager } = await import('@robrowser/plugin-api')
+		const mod = await import(blobUrl)              // page context, body manifest
+		PluginManager.register(mod.default)            // unified registration
+	} catch (e) {
+		console.error(`[PartyBuffBot] PluginManager.register failed:`, e)
+	}
+})()
