@@ -319,12 +319,12 @@
 		{
 			"slug": "tab-target",
 			"name": "TabTargetNative",
-			"description": "Tab / Shift+Tab / Enter targeting with native UIComponent panel; the lock key (default: the key above Tab — ² on Windows AZERTY, @ on Mac AZERTY — rebindable from the panel) or /focus locks the target (nothing moves it — Tab, list or world click, manual attack/skill, homun/merc — Space and skill keys keep hitting it ; survives leaving sight, released on death or toggling it again) and auto-focus on manual attack. Optional per-character checkbox auto-focuses the mob the player's own homunculus/mercenary attacks (melee or skill), with owner-priority: the player's last manual target holds focus for a few seconds so a minion hit won't yank it away. /tt and /tabtarget chat commands toggle the panel. Digit row 1-9 (layout-agnostic) auto-targets the locked mob on native skillbar F2 slots 1-9, shown as two panel rows (5 + 4) of split buttons: the number (left) casts, the right segment is a tri-state per-slot mode (off / A=auto-craft (hold) / S=self-cast), persisted per character. A holds a key to loop cast → confirm MakeItemSelection → re-cast (Prepare Potion, Arrow Making, Cooking…) and remembers the last confirmed ITID to re-select it on subsequent cycles (uniform across crafts, falls back to list[0] if the memory isn't in the new list, resets on page reload); S auto-casts the skill on the player (PLACE/TRAP under-foot, others on player GID); Ctrl+digit falls through to the native skillbar. Triple-click the titlebar to toggle the legacy Prev/Attack/Next debug buttons at runtime.",
-			"version": "7.21.0-a.17",
-			"latest": "7.21.0-a.17",
-			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.17/tab-target.di.esm.js",
-			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.17/tab-target.esm.js",
-			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.17/tab-target.user.js",
+			"description": "Tab / Shift+Tab / Enter targeting with native UIComponent panel; the lock key (default: the key above Tab — ² on Windows AZERTY, @ on Mac AZERTY — rebindable from the panel) or /focus locks the target (nothing moves it — Tab, list or world click, manual attack/skill, homun/merc — Space and skill keys keep hitting it ; survives leaving sight, released on death or toggling it again) and auto-focus on manual attack. Optional per-character checkbox auto-focuses the mob the player's own homunculus/mercenary attacks (melee or skill), with owner-priority: the player's last manual target holds focus for a few seconds so a minion hit won't yank it away. /tt and /tabtarget chat commands toggle the panel. Digit row 1-9 (layout-agnostic) auto-targets the locked mob on native skillbar F2 slots 1-9, shown as two panel rows (5 + 4) of split buttons: the number (left) casts, the right segment is a tri-state per-slot mode (off / A=auto-craft (hold) / S=self-cast), persisted per character. A holds a key to loop cast → confirm MakeItemSelection → re-cast (Prepare Potion, Arrow Making, Cooking…) and remembers the last confirmed ITID to re-select it on subsequent cycles (uniform across crafts, falls back to list[0] if the memory isn't in the new list, resets on page reload); S auto-casts the skill on the player (PLACE/TRAP under-foot, others on player GID); Ctrl+digit falls through to the native skillbar. The « Mobs & Players » list holds the mobs on a normal map; on a GvG map (WoE) it switches by itself to the hostile players (outside our party, guild and allied guilds, shown with their guild) by distance, then their homunculi, then the enemy guardians, then the Emperium — the order Tab cycles — and manual attacks/skills on them move the focus too. A mob rare on its map (at most 5 % of the map's mobs or at most 3 there, counted from the ItemDb mob sheets) gets a « rare ×N » badge on its row and a white minimap cross at the cell it was last seen, kept once it leaves the screen, removed on its death or a map change. Triple-click the titlebar to toggle the legacy Prev/Attack/Next debug buttons at runtime.",
+			"version": "7.21.0-a.23",
+			"latest": "7.21.0-a.23",
+			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.di.esm.js",
+			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.esm.js",
+			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.user.js",
 			"versions": [
 				{
 					"version": "7.21.0-a.17",
@@ -334,6 +334,15 @@
 					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.17/tab-target.di.esm.js",
 					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.17/tab-target.esm.js",
 					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.17/tab-target.user.js"
+				},
+				{
+					"version": "7.21.0-a.23",
+					"sha256": "bb8ff2bdb9a08a990eb7dab577aea859e2a59e16922443f00324a8e42850fe58",
+					"commit": "fc90dbe1a42da5609fb79274cbf9c10eeeb5c180",
+					"date": "2026-10-22",
+					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.di.esm.js",
+					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.esm.js",
+					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.user.js"
 				}
 			]
 		},

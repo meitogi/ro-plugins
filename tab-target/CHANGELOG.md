@@ -1,5 +1,14 @@
 # TabTargetNative — changelog
 
+## 7.21.0-a.23 — 2026-10-22
+
+- fix(tab-target): Tab cycles the target after a click on the panel (fc90dbe1a)
+- feat(tab-target): rare mobs — « rare ×N » badge and a minimap cross where last seen (d81595f7d)
+- feat(tab-target): reachable mobs first, the others below « Unreachable » (95991d678)
+- fix(tab-target): list every mob the server shows — view square, no row cap (8aedc3240)
+- feat(tab-target): one « Mobs & Players » list, WoE window removed (b07c99ffb)
+- feat(tab-target): Tab cycles hostile players, guardians and Emperium in WoE (1dcf46370)
+
 ## 7.21.0-a.17 — 2026-10-17
 
 First published version.

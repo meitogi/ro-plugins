@@ -1,0 +1,250 @@
+// ==UserScript==
+// @name         RO Plugin v3 — TabTargetNative
+// @namespace    robrowser
+// @version      7.21.0-a.23
+// @description  Tab / Shift+Tab / Enter targeting with native UIComponent panel; the lock key (default: the key above Tab — ² on Windows AZERTY, @ on Mac AZERTY — rebindable from the panel) or /focus locks the target (nothing moves it — Tab, list or world click, manual attack/skill, homun/merc — Space and skill keys keep hitting it ; survives leaving sight, released on death or toggling it again) and auto-focus on manual attack. Optional per-character checkbox auto-focuses the mob the player's own homunculus/mercenary attacks (melee or skill), with owner-priority: the player's last manual target holds focus for a few seconds so a minion hit won't yank it away. /tt and /tabtarget chat commands toggle the panel. Digit row 1-9 (layout-agnostic) auto-targets the locked mob on native skillbar F2 slots 1-9, shown as two panel rows (5 + 4) of split buttons: the number (left) casts, the right segment is a tri-state per-slot mode (off / A=auto-craft (hold) / S=self-cast), persisted per character. A holds a key to loop cast → confirm MakeItemSelection → re-cast (Prepare Potion, Arrow Making, Cooking…) and remembers the last confirmed ITID to re-select it on subsequent cycles (uniform across crafts, falls back to list[0] if the memory isn't in the new list, resets on page reload); S auto-casts the skill on the player (PLACE/TRAP under-foot, others on player GID); Ctrl+digit falls through to the native skillbar. The « Mobs & Players » list holds the mobs on a normal map; on a GvG map (WoE) it switches by itself to the hostile players (outside our party, guild and allied guilds, shown with their guild) by distance, then their homunculi, then the enemy guardians, then the Emperium — the order Tab cycles — and manual attacks/skills on them move the focus too. A mob rare on its map (at most 5 % of the map's mobs or at most 3 there, counted from the ItemDb mob sheets) gets a « rare ×N » badge on its row and a white minimap cross at the cell it was last seen, kept once it leaves the screen, removed on its death or a map change. Triple-click the titlebar to toggle the legacy Prev/Attack/Next debug buttons at runtime.
+// @match        *://*.cyro.live/*
+// @match        *://cyro.live/*
+// @run-at       document-start
+// @grant        unsafeWindow
+// @updateURL    https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.user.js
+// @downloadURL  https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/tab-target/7.21.0-a.23/tab-target.user.js
+// ==/UserScript==
+
+(async function () {
+	'use strict'
+	const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window
+
+	// Bootstrap-level dedup — same flag scheme as legacy plugins so a v2/v3
+	// install of the same plugin never double-runs.
+	const FLAG = '__RO_plugin_loaded_TabTargetNative_v3'
+	if (W[FLAG]) { return }
+	W[FLAG] = true
+
+	/* ============================================================
+	 * Plugin source — real JS, inspectable in the Tampermonkey editor.
+	 * Self-contained ES module body (esbuild bundle) ; `@robrowser/*`
+	 * static imports have been rewritten to top-level
+	 * `await import('@robrowser/*')` by the V3 builder so they fit
+	 * inside an `async function` declaration. The source file itself
+	 * stays plain ESM (consumable by Vite or any browser with the right
+	 * import map).
+	 *
+	 * NOTE : this function is NEVER called. Its body is extracted via
+	 * `.toString()`, reshaped from `return { tn }` into
+	 * `export default tn`, and loaded via Blob URL so the module
+	 * runs in PAGE context (same realm as PluginManager and libs).
+	 * ============================================================ */
+	async function pluginCode() {
+		var Me=Object.defineProperty;var i=(t,e)=>Me(t,"name",{value:e,configurable:!0});const { EntityManager: S, UIComponent: Fe, ChatBox: kt, PACKET: h, Session: E, PathFinding: fe, Network: pt, SkillTargetSelection: Z, ShortCut: $, Camera: Ue, Commands: _t, SkillConst: ot, Preferences: O, MapRenderer: Ye, UIManager: Ke, MiniMap: lt } = await import("@robrowser/plugin-api");const { observePacket: Be, observeSendPacket: $e } = await import("@robrowser/packet-observer");const { on: Nt, once: ie, EVENTS: nt } = await import("@robrowser/event-bus");const { registerCleanup: pe } = await import("@robrowser/lifecycle");const he = await import("@robrowser/ui");const { hostileTargets: Kt } = await import("@robrowser/woe-hostility");var rt={name:"TabTargetNative",version:"7.21.0-a.23",description:"Tab / Shift+Tab / Enter targeting with native UIComponent panel; the lock key (default: the key above Tab \u2014 \xB2 on Windows AZERTY, @ on Mac AZERTY \u2014 rebindable from the panel) or /focus locks the target (nothing moves it \u2014 Tab, list or world click, manual attack/skill, homun/merc \u2014 Space and skill keys keep hitting it ; survives leaving sight, released on death or toggling it again) and auto-focus on manual attack. Optional per-character checkbox auto-focuses the mob the player's own homunculus/mercenary attacks (melee or skill), with owner-priority: the player's last manual target holds focus for a few seconds so a minion hit won't yank it away. /tt and /tabtarget chat commands toggle the panel. Digit row 1-9 (layout-agnostic) auto-targets the locked mob on native skillbar F2 slots 1-9, shown as two panel rows (5 + 4) of split buttons: the number (left) casts, the right segment is a tri-state per-slot mode (off / A=auto-craft (hold) / S=self-cast), persisted per character. A holds a key to loop cast \u2192 confirm MakeItemSelection \u2192 re-cast (Prepare Potion, Arrow Making, Cooking\u2026) and remembers the last confirmed ITID to re-select it on subsequent cycles (uniform across crafts, falls back to list[0] if the memory isn't in the new list, resets on page reload); S auto-casts the skill on the player (PLACE/TRAP under-foot, others on player GID); Ctrl+digit falls through to the native skillbar. The \xAB Mobs & Players \xBB list holds the mobs on a normal map; on a GvG map (WoE) it switches by itself to the hostile players (outside our party, guild and allied guilds, shown with their guild) by distance, then their homunculi, then the enemy guardians, then the Emperium \u2014 the order Tab cycles \u2014 and manual attacks/skills on them move the focus too. A mob rare on its map (at most 5 % of the map's mobs or at most 3 there, counted from the ItemDb mob sheets) gets a \xAB rare \xD7N \xBB badge on its row and a white minimap cross at the cell it was last seen, kept once it leaves the screen, removed on its death or a map change. Triple-click the titlebar to toggle the legacy Prev/Attack/Next debug buttons at runtime.",match:["*://*.cyro.live/*","*://cyro.live/*"],deps:["ItemDb"],pars:{showDebugButtons:!1}};var At={pvp:!1,includeHomunculi:!0,includeGuardians:!0,includeEmperium:!0};function Qt(t,e=()=>!1,o=19){return t.filter(n=>n.distance<=o&&!e(n.gid))}i(Qt,"woeCycle");function Xt(t,e,o){let n=t.length;if(!n)return-1;let s=e===null?-1:t.findIndex(l=>l.GID===e);return s<0?o<0?n-1:0:((s+o)%n+n)%n}i(Xt,"nextIndex");var Ne={player:"Player",homunculus:"Homunculus",guardian:"Guardian",emperium:"Emperium"};function Re(t){let e=t.entity.display||{},o=Ne[t.kind],n=e.name;return n?t.kind==="player"?e.guild_name?`${n} \xB7 ${e.guild_name}`:n:t.kind==="homunculus"?`${n} \xB7 ${o}`:n:o}i(Re,"woeLabel");function Jt(t,e,o){return t?e().map(n=>({entity:n.entity,stale:!1,dist:n.distance,kind:n.kind,label:Re(n)})):o()}i(Jt,"listRows");function te(t,e){return Math.abs(t)<=15&&Math.abs(e)<=15}i(te,"inView");function Oe(t,e,o,n){let{canReach:s,reachCache:l}=e;if(!s||!l){for(let d of t)d.reachable=!0;return}let r=[];for(let d of t){let f=d.entity.position[0]|0,u=d.entity.position[1]|0,p=`${o},${n}|${f},${u}`,b=l.get(d.entity.GID);d.reachable=b?b.ok:!0,(!b||b.key!==p)&&r.push({row:d,key:p,ex:f,ey:u,at:b?b.at:-1/0})}r.sort((d,f)=>d.at-f.at);let c=e.clock||(()=>0),a=c();for(let d=0;d<r.length&&!(d>0&&c()-a>=(e.searchMs??1/0));d++){let f=r[d];f.row.reachable=s(o,n,f.ex,f.ey),l.set(f.row.entity.GID,{key:f.key,ok:f.row.reachable,at:e.now})}}i(Oe,"resolveReach");function ee(t,e,o){let{snapshots:n,vanished:s,pinned:l,now:r}=o,c=e.position||[0,0],a=[],d=[],f=new Set;for(let u of t){if(u===e||u.objecttype!==o.typeMob)continue;let p=u.GID;if(!p||p<=0){d.push({gid:p,reason:"corpse"});continue}if(s.has(p)){d.push({gid:p,reason:"vanished"});continue}let b=u.position?.[0]||0,x=u.position?.[1]||0;if((b||x)&&n.set(p,{x:b,y:x,name:u.display&&u.display.name||null,job:u.job,seenAt:r,reason:n.get(p)?.reason||"drift"}),f.add(p),u.job)for(let[X,U]of n){if(X===p||U.reason!=="teleport"||U.job!==u.job)continue;let T=U.x-b,P=U.y-x;T*T+P*P<100&&n.delete(X)}let C=b-c[0],v=x-c[1];if(!te(C,v)){d.push({gid:p,reason:"out-of-view",dx:C,dy:v});continue}a.push({entity:u,stale:!1,dist:C*C+v*v})}if(Oe(a,o,c[0]|0,c[1]|0),o.reachCache)for(let u of o.reachCache.keys())f.has(u)||o.reachCache.delete(u);for(let[u,p]of n){if(f.has(u))continue;if(r-p.seenAt>o.staleTtl){n.delete(u),d.push({gid:u,reason:"stale-expired"});continue}let b=p.x-c[0],x=p.y-c[1];if(!te(b,x)){n.delete(u),d.push({gid:u,reason:"stale-out-of-view",dx:b,dy:x});continue}a.push({entity:{GID:u,position:[p.x,p.y],job:p.job,display:p.name?{name:p.name}:null},stale:!0,reason:p.reason,dist:b*b+x*x})}return a.sort((u,p)=>{let b=u.reachable===!1?1:0,x=p.reachable===!1?1:0;if(b!==x)return b-x;let C=l.has(u.entity.job)?1:0,v=l.has(p.entity.job)?1:0;return C!==v?v-C:u.dist-p.dist}),{rows:a,dropped:d}}i(ee,"collectMobs");function oe(t){let e=t.filter(n=>!n.stale),o=e.filter(n=>n.reachable!==!1);return(o.length?o:e).map(n=>n.entity)}i(oe,"tabCycle");var Pe=.05,Ge=3;function ne(t,e){let o=String(e).replace(/\.gat$/i,"").toLowerCase(),n=new Map,s=0;for(let r in t||{})for(let c of t[r].spawns||[])c.map.toLowerCase()===o&&(n.set(Number(r),(n.get(Number(r))||0)+c.amount),s+=c.amount);let l=new Map;for(let[r,c]of n){let a=c/s;(a<=Pe||c<=Ge)&&l.set(r,{amount:c,total:s,share:a})}return l}i(ne,"rareSpecies");function se(t,e,o){for(let n of t)n.stale||!e.has(n.entity.job)||o.set(n.entity.GID,{x:n.entity.position[0]|0,y:n.entity.position[1]|0,job:n.entity.job})}i(se,"noteRareSeen");var me=5,m=null,A=null,Bt=0,Ve=3e3,w=!1,We=["Backquote","IntlBackslash"],ge="M7 11V7a5 5 0 0 1 10 0v4",ae=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="${ge}"/></svg>`,je="#ffc6c6",Ct=null,ht=!1,q=null,g=null,be=null,H=null,k={OFF:0,SELF:1,AUTO:2},R=Array(9).fill(0),M=null,W=!1,Y=null,ye=!1,mt=!1,at=new Map,st=new Map,z=new Map,Ze=5e3,ke=new Map,qe=.5,He=[],Rt=null,Tt=new Map,Ot=null,et=null,G=new Map,ze=16777215,Ee="TT:";function Qe(t,e,o,n){return fe.search(t,e,o,n,0,He)>0}i(Qe,"canWalkTo");var re=1,Xe=3,K=new Set,Je=1e4,L=new Set,gt=null,D=null,Dt=!1;function V(){Dt||!g||!g.ui||!g.ui[0]||(Dt=!0,setTimeout(()=>{Dt=!1,_()},0))}i(V,"scheduleUpdateUI");var it=!1,Q=0,Pt=[],j=[],we=[],ct=0,dt=0,I={spawn:0,vanish:0,map:0,act:0};function Gt(){Vt(A),m=null,A=null,w=!1,Bt=0,q=null,z.clear(),K.clear(),ke.clear();for(let t of G.keys())$t(t);G.clear(),Tt=new Map,Ot=null}i(Gt,"resetSessionState");function to(){let t=Et();!t||t===Ot||t===et||typeof Rt?.loadMobs!="function"||(et=t,Rt.loadMobs().then(e=>{et===t&&(et=null,Et()===t&&(Tt=ne(e,t),Ot=t,V()))},e=>{et=null,console.warn("[RO][TabTarget] mob sheets unavailable, no rare marks",e)}))}i(to,"ensureRareTable");function Te(){let t=lt?.getUI?.();return t&&typeof t.addNpcMark=="function"?[t]:lt&&typeof lt.addNpcMark=="function"?[lt]:[]}i(Te,"_minimaps");function eo(){if(G.size)for(let t of Te())for(let[e,o]of G)try{t.addNpcMark(Ee+e,o.x,o.y,ze,1/0)}catch{}}i(eo,"syncRareMarks");function $t(t){for(let e of Te())try{e.removeNpcMark(Ee+t)}catch{}}i($t,"_removeRareMark");function oo(t,e,o,n,s){let l=o-t,r=n-e;return l===0&&r===0?0:-(Math.atan2(r,l)*180/Math.PI-90)+s}i(oo,"computeArrowDeg");function xt(){let t=E?.Entity;if(!t||at.size===0)return;let e=Number(Ue?.angleFinal?.[1])||0;for(let[o,n]of at){let s=S.get(o),l,r;if(s&&s.position&&(s.position[0]||s.position[1]))l=s.position[0],r=s.position[1];else{let a=z.get(o);if(!a)continue;l=a.x,r=a.y}let c=oo(t.position?.[0]||0,t.position?.[1]||0,l,r,e);n.style.transform=`rotate(${c.toFixed(1)}deg)`}}i(xt,"refreshArrowsOnly");function bt(){Q||(Q=requestAnimationFrame(()=>{Q=0,xt(),it&&bt()}))}i(bt,"scheduleArrowFrame");var no=[];function xe(){if(!E||!E.Entity)return[];let t=0,e=[];S.forEach(s=>{e.push(s)});let{rows:o,dropped:n}=ee(e,E.Entity,{snapshots:z,vanished:K,pinned:L,now:Date.now(),staleTtl:Ze,typeMob:me,canReach:Qe,reachCache:ke,clock:i(()=>performance.now(),"clock"),searchMs:qe});return no=n,o}i(xe,"getSortedMobs");function so(t){if(!t?.display)return;let e=t.display;if(e.load===e.TYPE.COMPLETE){try{e.add()}catch{}return}ve(t),q=t.GID}i(so,"_showName");function ve(t){let e=t?.display;if(!e||e.load!==e.TYPE.NONE)return;e.load=e.TYPE.LOADING;let o=h.CZ.REQNAME2||h.CZ.REQNAME;if(o)try{let n=new o;n.AID=t.GID,pt.sendPacket(n)}catch{}}i(ve,"_requestName");function Vt(t){if(t?.display){Ce(t),t.display.display=!1;try{t.display.remove()}catch{}}}i(Vt,"_hideName");var io=10,yt=[];function ao(t,e,o){yt.push({t:new Date().toLocaleTimeString(),origin:t,fromMinion:o,gid:e?.GID??null,name:e?.display?.name??null}),yt.length>io&&yt.shift()}i(ao,"_pushFocusLog");function F(t,e=!1,o="unknown"){if(e||(Bt=Date.now()),ao(o,t,e),A&&A!==t){if(A.attachments?.remove)try{A.attachments.remove("lockon")}catch{}Vt(A)}if(t.attachments?.add)try{t.attachments.add({uid:"lockon",spr:"data/sprite/cursors.spr",act:"data/sprite/cursors.act",frame:3,repeat:!0,depth:10})}catch{}A=t,m=t.GID,so(t)}i(F,"setTarget");function Wt(t){return t?t.GID??t.AID??t.srcGID??t.srcAID??t.SrcAID??null:null}i(Wt,"_extractSrcGID");function Ie(t){if(!t||!E?.Entity)return!1;let e=E.Entity,o=e.GID,n=e.AID,s=Wt(t);return s==null?!1:s===o||n!=null&&s===n}i(Ie,"_isLocalActor");function Se(t){return t==null||!W?!1:t===E?.homunId||t===E?.mercId}i(Se,"_isOwnMinion");function ro(t){return t==null?!1:t>(ot?.HOMUN_BEGIN??8e3)&&t<(ot?.HOMUN_LAST??8061)||t>(ot?.MERCENARY_BEGIN??8200)&&t<(ot?.MERCENARY_LAST??8242)}i(ro,"_isMinionSkill");function jt(){return m!=null&&Date.now()-Bt<Ve}i(jt,"_minionFocusBlocked");function Zt(){return!!E?.mapState?.isGVG&&typeof Kt=="function"}i(Zt,"_isGvgMap");function qt(t){return t?t.objecttype===me?!0:Zt()&&Kt(At).some(e=>e.gid===t.GID):!1}i(qt,"_isTargetable");function lo(t){if(I.act++,w)return;let e=Ie(t),o=!e&&Se(Wt(t));if(!e&&!o)return;let n=t.targetGID??t.targetAID??t.dstGID;if(!n)return;let s=S.get(n);qt(s)&&s.GID!==m&&(o&&jt()||(F(s,o,"attack-pkt"),V()))}i(lo,"onNativeAttack");function co(t){if(I.skill=(I.skill||0)+1,w)return;let e=ro(t?.SKID);if(e&&!W)return;let o=t?.targetID;if(!o)return;let n=S.get(o);qt(n)&&n.GID!==m&&(e&&jt()||(F(n,e,"send-skill"),V()))}i(co,"onSendSkill");function uo(t){if(I.skill=(I.skill||0)+1,w)return;let e=Ie(t),o=!e&&Se(Wt(t));if(!e&&!o)return;let n=t.targetGID??t.targetAID??t.targetID??t.dstGID??t.TargetAID;if(!n)return;let s=S.get(n);qt(s)&&s.GID!==m&&(o&&jt()||(F(s,o,"skill-pkt"),V()))}i(uo,"onNativeSkill");function Ae(){return Qt(Kt(At),t=>K.has(t))}i(Ae,"getWoeTargets");function Mt(t){if(Zt()){let n=Ae().map(l=>l.entity),s=Xt(n,m,t);s<0?m=null:F(n[s],!1,"tab"),_();return}let e=oe(xe());if(e.length===0){m=null,_();return}let o=-1;m!==null&&(o=e.findIndex(n=>n.GID===m)),o=((o+t)%e.length+e.length)%e.length,F(e[o],!1,"tab"),_()}i(Mt,"cycleTarget");function _e(){w=!w&&m!==null,w||Ce(A),_()}i(_e,"toggleLock");function fo(t){let e=t?.display,o=e?.ctx?.canvas;if(!o||e.load!==e.TYPE.COMPLETE||e._ttLockWidth===o.width)return;let n=window.devicePixelRatio||1,s=document.createElement("canvas");s.width=o.width,s.height=o.height,s.getContext("2d").drawImage(o,0,0),o.width+=16*n;let l=e.ctx;l.drawImage(s,16*n,0);let r=new window.Path2D(ge);r.rect(3,11,18,11),l.save(),l.translate(4*n,4*n),l.scale(.55*n,.55*n),l.lineCap="round",l.lineJoin="round",l.strokeStyle="black",l.lineWidth=5,l.stroke(r),l.strokeStyle=je,l.lineWidth=2.5,l.stroke(r),l.restore(),e._ttLockWidth=o.width}i(fo,"_drawLockBadge");function Ce(t){let e=t?.display;if(e?._ttLockWidth){e._ttLockWidth=0;try{e.refresh(t)}catch{}}}i(Ce,"_clearLockBadge");function Ht(){return Ct||(Ct=O.get("TabTargetNative.lockKey",{code:null,label:null},1)),Ct}i(Ht,"_lockKeyPrefs");function po(t){if(t.ctrlKey||t.altKey||t.metaKey)return!1;let e=Ht().code;return e?t.code===e:We.includes(t.code)}i(po,"_isLockKey");function Ft(){let t=g?.ui?.[0]?.querySelector(".tt-lockkey");t&&(t.textContent=ht?"\u2026":Ht().label||"\xB2 / @")}i(Ft,"refreshLockKeyButton");function ho(t){if(t.key==="Tab"||t.key==="Enter"||t.key===" "||t.code.startsWith("Digit"))return"Tab Target";let e=null;try{e=JSON.parse(window.localStorage.getItem("ShortCutControls"))?.ShortCuts}catch{}for(let o in e){let n=e[o].cust||e[o].init;if(n?.key===t.which&&!n.shift&&!n.alt&&!n.ctrl)return o}return null}i(ho,"_lockKeyConflict");function mo(){if(ht)return;ht=!0;let t=document.activeElement;for(;t?.shadowRoot?.activeElement;)t=t.shadowRoot.activeElement;t&&t.blur&&t.blur(),Ft();let e=i(o=>{if(["Shift","Control","Alt","Meta"].includes(o.key))return;o.preventDefault(),o.stopImmediatePropagation();let n=o.key==="Escape"?null:ho(o);if(n){kt.addText(`[TabTarget] ${o.key.toUpperCase()} is already used (${n}) \u2014 press another key, Esc cancels`,kt.TYPE.ERROR);return}if(window.removeEventListener("keydown",e,!0),ht=!1,o.key!=="Escape"){let s=Ht();s.code=o.code,s.label=o.key.length===1?o.key.toUpperCase():o.key,s.save()}Ft()},"onKey");window.addEventListener("keydown",e,!0)}i(mo,"startLockKeyRebind");function Ut(){if(!m)return;let t=S.get(m);if(!t||!E?.Entity)return;let e=E.Entity;S.setFocusEntity&&S.setFocusEntity(t);let o=[],n=fe.search(e.position[0]|0,e.position[1]|0,t.position[0]|0,t.position[1]|0,(e.attack_range||2)+1,o),s=h.CZ.REQUEST_ACT2||h.CZ.REQUEST_ACT,l=new s;if(l.action=7,l.targetGID=t.GID,n&&n<2){pt.sendPacket(l);return}E.moveAction=l;let r=h.CZ.REQUEST_MOVE2||h.CZ.REQUEST_MOVE;if(r&&n){let c=new r;c.dest=[o[(n-1)*2],o[(n-1)*2+1]],pt.sendPacket(c)}else pt.sendPacket(l)}i(Ut,"attackSelected");var go=`
+		<div class="tt-panel">
+			<div class="tt-header">
+				<span class="tt-title">Tab Target <span class="tt-version">v${rt.version}</span></span>
+				<button type="button" class="tt-win-btn tt-min" title="Minimize">_</button>
+				<button type="button" class="tt-win-btn tt-close" title="Close">x</button>
+			</div>
+			<div class="tt-body">
+				<div class="tt-current tt-debug-only" hidden>No target</div>
+				<div class="tt-actions tt-debug-only" hidden>
+					<button class="tt-btn tt-prev">\u25C0 Prev</button>
+					<button class="tt-btn tt-attack">Attack</button>
+					<button class="tt-btn tt-next">Next \u25B6</button>
+				</div>
+				<div class="tt-skills">
+					<div class="tt-skill-row">
+						<button class="tt-btn tt-skill" data-slot="0"><span class="tt-skill-num">1</span><span class="tt-skill-mode" title="Slot 1 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+						<button class="tt-btn tt-skill" data-slot="1"><span class="tt-skill-num">2</span><span class="tt-skill-mode" title="Slot 2 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+						<button class="tt-btn tt-skill" data-slot="2"><span class="tt-skill-num">3</span><span class="tt-skill-mode" title="Slot 3 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+						<button class="tt-btn tt-skill" data-slot="3"><span class="tt-skill-num">4</span><span class="tt-skill-mode" title="Slot 4 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+						<button class="tt-btn tt-skill" data-slot="4"><span class="tt-skill-num">5</span><span class="tt-skill-mode" title="Slot 5 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+					</div>
+					<div class="tt-skill-row">
+						<button class="tt-btn tt-skill" data-slot="5"><span class="tt-skill-num">6</span><span class="tt-skill-mode" title="Slot 6 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+						<button class="tt-btn tt-skill" data-slot="6"><span class="tt-skill-num">7</span><span class="tt-skill-mode" title="Slot 7 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+						<button class="tt-btn tt-skill" data-slot="7"><span class="tt-skill-num">8</span><span class="tt-skill-mode" title="Slot 8 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+						<button class="tt-btn tt-skill" data-slot="8"><span class="tt-skill-num">9</span><span class="tt-skill-mode" title="Slot 9 mode: off / A=auto-craft (hold) / S=self-cast"></span></button>
+					</div>
+				</div>
+				<label class="tt-opt"><input type="checkbox" class="tt-autofocus-minion"> Auto-focus homun/merc</label>
+				<div class="tt-opt">Lock key <button type="button" class="tt-btn tt-lockkey" title="Click, then press the new key (Esc cancels)">\xB2 / @</button></div>
+				<div class="tt-hint">Tab / Shift+Tab / Enter \xB7 lock key or /focus = lock</div>
+				<div class="tt-list-title" title="Mobs ; on a WoE map, hostile players, their homunculi, guardians and Emperium">Mobs &amp; Players</div>
+				<div class="tt-mob-list"></div>
+			</div>
+		</div>
+		`.trim(),bo=`
+		.tt-panel { position: absolute; top: 80px; right: 10px; background: rgba(20,22,28,0.96); border: 1px solid #445; border-radius: 6px; color: #fff; font-family: Arial, sans-serif; font-size: 11px; width: 260px; text-shadow: 1px 1px 0 #000; box-shadow: 0 2px 8px rgba(0,0,0,0.6); display: flex; flex-direction: column; user-select: none; }
+		.tt-header { background: rgba(40,44,54,0.97); border-bottom: 1px solid #334; padding: 4px 6px 4px 8px; font-weight: bold; border-radius: 5px 5px 0 0; user-select: none; cursor: move; display: flex; align-items: center; flex: 0 0 auto; }
+		.tt-title { flex: 1; }
+		.tt-version { font-size: 9px; opacity: 0.7; font-weight: normal; margin-left: 4px; }
+		.tt-win-btn {
+		  width: 18px; height: 18px; line-height: 1; text-align: center;
+		  padding: 0; margin-left: 4px; border-radius: 4px;
+		  background: #2a2f3a; border: 1px solid #556;
+		  color: #fff; font-family: inherit; font-size: 11px; font-weight: bold;
+		  cursor: pointer; user-select: none; text-shadow: 1px 1px 0 #000;
+		  transition: background 80ms, border-color 80ms;
+		}
+		.tt-win-btn:hover { background: #39414f; border-color: #9ab; }
+		.tt-win-btn:active { background: #454e5e; border-color: #bcd; }
+		.tt-close:hover { background: rgba(200,60,60,0.95); border-color: #e88; }
+		.tt-close:active { background: rgba(230,80,80,1); border-color: #fbb; }
+		.tt-body { padding: 8px; }
+		.tt-panel.tt-min .tt-body { display: none; }
+		.tt-current { background: rgba(0,0,0,0.5); padding: 5px 7px; margin-bottom: 6px; border-left: 3px solid #556; min-height: 16px; }
+		.tt-current.has-target { border-left-color: #f80; }
+		/* Keyboard focus: the accent on the control's own border, not the browser's outer ring. */
+		.tt-panel button:focus-visible, .tt-panel input:focus-visible { outline: none; border-color: #8fb8e8; }
+		.tt-panel input[type=checkbox]:focus-visible { outline: 1px solid #8fb8e8; outline-offset: 0; }
+		.tt-actions { display: flex; gap: 3px; margin-bottom: 4px; }
+		/* '.tt-actions { display: flex }' outranks the UA's '[hidden] { display: none }'
+		   so a bare 'hidden' attribute fails to hide the debug row. Author-rule with
+		   matching specificity wins back. Same rule covers .tt-current (extra defense
+		   in case future CSS adds a 'display' property on it). */
+		.tt-debug-only[hidden] { display: none; }
+		/* Skill bar : 2 rows (5 + 4) of split buttons. Each button = number (left,
+		   casts) | mode segment (right, cycles off/A/S), divided by a full-height
+		   border. The rows are a 5-column grid so all 9 buttons share one width \u2014 the
+		   bottom row fills 4 of the 5 cells, last cell empty (buttons don't stretch). */
+		.tt-skills { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+		.tt-skill-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+		/* The compound selector .tt-skill.tt-btn (specificity 0,2,0) beats the base
+		   .tt-btn padding rule so the split children reach the button edges \u2014
+		   otherwise the 4px .tt-btn frame insets the mode segment and its background /
+		   separator border stop short of full height. The number's own padding sets
+		   the button height. */
+		.tt-skill.tt-btn { display: flex; align-items: stretch; padding: 0; overflow: hidden; line-height: 1.2; }
+		.tt-skill-num { flex: 1; padding: 4px 6px; text-align: center; }
+		/* Empty slot (no skill assigned) : greyed number + dim button, still clickable
+		   and brightens on hover \u2014 signals the slot is there and interactive. */
+		.tt-skill.tt-empty { opacity: 0.45; }
+		.tt-skill.tt-empty.on { opacity: 1; } /* a mode set on it still has to read as on */
+		/* The mode segment is a full-height slice of the button (no padding, centred
+		   glyph, border spans the whole height) so it reads as an "option" on the
+		   button. OFF : dimmed, empty. SELF/AUTO : highlighted, letter shown (the
+		   letter, not the colour, distinguishes the two \u2014 same active style for both). */
+		.tt-skill-mode { flex: 0 0 15px; display: flex; align-items: center; justify-content: center; font-size: 9px; border-left: 1px solid #556; opacity: 0.4; }
+		.tt-skill-mode:hover { background: rgba(255,255,255,0.12); opacity: 1; }
+		.tt-skill-mode.active { background: #5a6579; color: #fff; font-weight: bold; opacity: 1; }
+		/* A slot with a mode reads as a pressed button, number and letter alike. */
+		.tt-btn.tt-skill.on { background: #4a5568; border-color: #9ab; color: #fff; }
+		.tt-btn.tt-skill.on:hover { background: #56627a; }
+		.tt-btn { flex: 1; background: #2a2f3a; border: 1px solid #556; color: #fff; font-family: inherit; font-size: 10px; padding: 4px 6px; border-radius: 4px; text-shadow: 1px 1px 0 #000; }
+		.tt-btn:hover { background: #39414f; border-color: #9ab; }
+		.tt-btn:active { background: #454e5e; }
+		/* Auto-focus opt-in : lock the mob the player's homun/merc attacks. */
+		.tt-opt { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #cde; margin-bottom: 6px; cursor: pointer; }
+		.tt-opt input { cursor: pointer; margin: 0; }
+		.tt-hint { color: #aaa; font-size: 9px; text-align: center; margin-bottom: 6px; }
+		.tt-list-title { color: #cde; font-size: 10px; font-weight: bold; padding: 0 6px 2px; border-bottom: 1px solid #334; }
+		.tt-mob-list { max-height: 200px; overflow-y: auto; font-size: 10px; }
+		.tt-mob-entry { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); user-select: none; }
+		.tt-mob-entry:hover { background: rgba(255,255,255,0.08); }
+		.tt-mob-entry.active { background: rgba(180,60,30,0.55); border-left: 2px solid #f80; padding-left: 4px; }
+		.tt-arrow { display: inline-block; width: 14px; text-align: center; color: #4af; transform-origin: center; transition: transform 0.12s linear; font-size: 15px; font-weight: bold; line-height: 1; flex: 0 0 auto; }
+		.tt-mob-entry.active .tt-arrow { color: #f80; }
+		.tt-mob-entry.locked { background: rgba(160,120,20,0.6); border-left-color: gold; }
+		.tt-mob-entry.locked .tt-arrow { color: gold; }
+		.tt-mob-entry.locked .tt-arrow-text::before { content: ''; display: inline-block; width: 1em; height: 1em; margin-right: 3px; vertical-align: -0.125em; background-color: currentColor; -webkit-mask: url("data:image/svg+xml,${encodeURIComponent(ae)}") no-repeat center/contain; mask: url("data:image/svg+xml,${encodeURIComponent(ae)}") no-repeat center/contain; }
+		.tt-mob-entry.stale { font-style: italic; cursor: default; overflow: hidden; animation: tt-stale-fade 5s linear forwards; }
+		.tt-mob-entry.stale .tt-arrow { color: #888; }
+		/* Collapse height/padding/border in the last 1% of the fade so a stale
+		   row that is already invisible ALSO stops taking ~8px of blank space.
+		   animation-fill-mode forwards keeps these end-state values until the
+		   500ms cleanup tick removes the DOM node \u2014 without this, the empty
+		   rectangle persisted visibly between fade-end and the next render. */
+		@keyframes tt-stale-fade {
+			0%  { opacity: 0.6; }
+			99% { opacity: 0; max-height: 30px; padding-top: 3px; padding-bottom: 3px; border-bottom-width: 1px; }
+			100%{ opacity: 0; max-height: 0;  padding-top: 0;  padding-bottom: 0;  border-bottom-width: 0; }
+		}
+		.tt-arrow-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		/* Pin-icon wrapper. The .ro-icon class (size, mask, currentColor) is
+		   injected globally by @robrowser/icons at boot \u2014 this rule only
+		   controls visibility (hover-only) and color. */
+		.tt-pin-icon { font-size: 12px; cursor: pointer; color: #ccc; opacity: 0; transition: opacity 120ms ease; flex: 0 0 auto; margin-left: auto; }
+		.tt-mob-entry:hover .tt-pin-icon { opacity: 0.45; }
+		.tt-mob-entry:hover .tt-pin-icon:hover { opacity: 0.85; }
+		/* Pinned : icon stays visible and goes gold even when the row is not hovered. */
+		.tt-mob-entry.pinned .tt-pin-icon { opacity: 1; color: gold; }
+		.tt-mob-entry.woe .tt-pin-icon { display: none; }
+		/* Dim non-pinned rows when the current map has at least one pin defined. */
+		.tt-mob-entry.dim:not(.pinned) { opacity: 0.5; filter: grayscale(0.6); }
+		.tt-mob-entry.dim:not(.pinned) .tt-arrow,
+		.tt-mob-entry.dim:not(.pinned) .tt-arrow-text { color: #888; }
+		/* Terrain, apart from the pins : a mob the player can walk to has its own
+		   colour, focused or not ; the others are greyed below the separator. */
+		.tt-mob-entry.reachable .tt-arrow-text { color: #9fe8a0; }
+		.tt-mob-entry.unreachable { opacity: 0.6; }
+		.tt-mob-entry.unreachable .tt-arrow-text { color: #999; }
+		.tt-rare { flex: none; padding: 0 4px; border: 1px solid rgba(255,255,255,0.7); border-radius: 3px; color: #fff; font-size: 9px; line-height: 12px; white-space: nowrap; }
+		.tt-rare:empty { display: none; }
+		.tt-unreachable-sep { display: flex; align-items: center; gap: 6px; padding: 4px 6px 2px; color: #889; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; }
+		.tt-unreachable-sep::before,
+		.tt-unreachable-sep::after { content: ''; flex: 1; border-top: 1px solid #445; }
+		`,ut=!1;function le(){let t=E?.GID;if(!t)return;M||(M=O.get("TabTargetNative.slotModes",{},1));let e=Array.isArray(M[t])?M[t]:null;if(!e){let o=yo(t);o&&(e=o,M[t]=o.slice(),M.save())}R=Array.from({length:9},(o,n)=>{let s=e&&e[n]|0;return s===k.SELF||s===k.AUTO?s:k.OFF}),wt()}i(le,"loadSlotModesForChar");function yo(t){let e=O.get("TabTargetNative.selfToggles",{},1),o=O.get("TabTargetNative.autoToggles",{},1),n=Array.isArray(e?.[t])?e[t]:null,s=Array.isArray(o?.[t])?o[t]:null;return!n&&!s?null:Array.from({length:9},(l,r)=>s&&s[r]?k.AUTO:n&&n[r]?k.SELF:k.OFF)}i(yo,"migrateLegacyToggles");function ko(){let t=E?.GID;t&&(M||(M=O.get("TabTargetNative.slotModes",{},1)),M[t]=R.slice(),M.save())}i(ko,"saveSlotModes");function ce(){let t=E?.GID;t&&(Y||(Y=O.get("TabTargetNative.autoFocusMinion",{},1)),W=!!Y[t],zt())}i(ce,"loadAutoFocusForChar");function Eo(){let t=E?.GID;t&&(Y||(Y=O.get("TabTargetNative.autoFocusMinion",{},1)),Y[t]=W,Y.save())}i(Eo,"saveAutoFocusMinion");function Et(){try{let t=Ye?.currentMap;return t?String(t).replace(/\.gat$/i,"").toLowerCase():null}catch{return null}}i(Et,"getCurrentMapName");function wo(){let t=E?.GID;if(!t||(D||(D=O.get("TabTargetNative.pinnedMobs",{},1)),gt=Et(),L.clear(),!gt))return;let e=D[t];if(!e)return;let o=e[gt];if(Array.isArray(o))for(let n of o)L.add(n)}i(wo,"loadPinnedMobsForMap");function To(){let t=E?.GID;if(!t)return;let e=Et();e&&(gt=e,D||(D=O.get("TabTargetNative.pinnedMobs",{},1)),D[t]||(D[t]={}),L.size===0?delete D[t][e]:D[t][e]=Array.from(L),D.save())}i(To,"savePinnedMobs");function xo(t){t&&(L.has(t)?L.delete(t):L.add(t),To(),_())}i(xo,"togglePin");function wt(){!g||!g.ui||!g.ui[0]||g.ui[0].querySelectorAll(".tt-skill").forEach(t=>{let e=parseInt(t.getAttribute("data-slot"),10),o=t.querySelector(".tt-skill-mode");if(!o)return;let n=R[e];o.textContent=n===k.AUTO?"A":n===k.SELF?"S":"",o.classList.toggle("active",n!==k.OFF),t.classList.toggle("on",n!==k.OFF)})}i(wt,"refreshModeButtons");function zt(){if(!g||!g.ui||!g.ui[0])return;let t=g.ui[0].querySelector(".tt-autofocus-minion");t&&(t.checked=W)}i(zt,"refreshAutoFocusCheckbox");function vo(){if(!g||!g.ui||!g.ui[0])return;let t=$.getList?.()||[];g.ui[0].querySelectorAll(".tt-skill").forEach(e=>{let o=parseInt(e.getAttribute("data-slot"),10),n=t[o+9],s=!n||!n.isSkill&&!n.ID;e.classList.toggle("tt-empty",s)})}i(vo,"refreshSkillButtons");function de(){if(!g||!g.ui||!g.ui[0])return;let t=!!(ye||mt);g.ui[0].querySelectorAll(".tt-debug-only").forEach(e=>{e.hidden=!t})}i(de,"applyDebugRow");function Io(){document.querySelectorAll(".tt-panel").forEach(e=>e.remove()),st.clear(),at.clear(),g=new Fe("TabTargetPanel",go,bo);let t=g;return g.onKeyDown=function(e){let o=document.activeElement;for(;o?.shadowRoot?.activeElement;)o=o.shadowRoot.activeElement;if(o&&(o.tagName==="INPUT"||o.tagName==="TEXTAREA"||o.isContentEditable))return;let n=t.ui&&t.ui[0],s=!!n&&(n.contains(o)||n.getRootNode().host===o);if(!!o&&!s&&o!==document.body&&o!==document.documentElement&&o.tagName!=="CANVAS"&&(e.key==="Tab"||e.key==="Enter"||e.key===" "))return;if(po(e)){e.preventDefault(),_e();return}if(e.key==="Tab"){e.preventDefault(),w||Mt(e.shiftKey?-1:1);return}if((e.key==="Enter"||e.key===" ")&&m){e.preventDefault(),Ut();return}let r=De.find(c=>c.key===e.key);r&&(e.preventDefault(),Yt(r.slot))},be=i(function(){let e=t.ui&&t.ui[0];if(!e)return;e.querySelectorAll("button, input").forEach(c=>{c.tabIndex=-1}),e.addEventListener("mousedown",c=>{c.target.closest("button, input")&&c.preventDefault()});let o=i((c,a)=>{let d=e.querySelector(c);d&&d.addEventListener("click",f=>{f.preventDefault(),a()})},"bind");o(".tt-prev",()=>Mt(-1)),o(".tt-next",()=>Mt(1)),o(".tt-attack",()=>Ut()),o(".tt-lockkey",()=>mo()),e.querySelectorAll(".tt-skill").forEach(c=>{let a=parseInt(c.getAttribute("data-slot"),10),d=a+9,f=c.querySelector(".tt-skill-mode");f&&f.addEventListener("click",u=>{u.preventDefault(),u.stopPropagation(),R[a]=R[a]===k.OFF?k.AUTO:R[a]===k.AUTO?k.SELF:k.OFF,wt(),ko()}),c.addEventListener("click",u=>{u.preventDefault(),Yt(d,a)})});let n=e.querySelector(".tt-autofocus-minion");n&&n.addEventListener("change",()=>{W=n.checked,Eo()});let s=e.querySelector(".tt-min"),l=e.querySelector(".tt-close");s&&s.addEventListener("click",c=>{c.stopPropagation(),ut=!ut,e.classList.toggle("tt-min",ut)}),l&&l.addEventListener("click",c=>{c.stopPropagation(),H&&H.hide()});let r=e.querySelector(".tt-header");if(r){let c=0,a=0;r.addEventListener("click",d=>{let f=d.target;f&&(f.classList.contains("tt-min")||f.classList.contains("tt-close"))||(c++,clearTimeout(a),a=setTimeout(()=>{c=0},500),c>=3&&(c=0,mt=!mt,de(),kt.addText(`[TabTarget] debug buttons ${mt?"shown":"hidden"}`,kt.TYPE.BLUE)))})}t.draggable&&t.ui.find&&t.draggable(t.ui.find(".tt-header")),e.classList.toggle("tt-min",ut),de(),wt(),zt(),Ft(),_()},"bindPanel"),g}i(Io,"buildPanel");function _(){if(!g)return;let t=g.ui&&g.ui[0];if(!t)return;w&&fo(A),vo();let e=Zt(),o=Jt(e,Ae,xe);if(e)for(let r of o)ve(r.entity);else to(),se(o,Tt,G),eo();let n=o.filter(r=>!r.stale).length,s=t.querySelector(".tt-current");if(s)if(m!==null){let r=o.find(a=>a.entity.GID===m),c=r&&!r.stale?r.entity:S.get(m);if(c){let a=c.display&&c.display.name||`mob ${c.job}`;s.textContent=`\u{1F3AF} ${a} (job=${c.job})`,s.classList.add("has-target")}else s.textContent=`Target lost \u2014 ${n} mob(s)`,s.classList.remove("has-target")}else s.textContent=`No target \u2014 ${n} mob(s) visible`,s.classList.remove("has-target");let l=t.querySelector(".tt-mob-list");if(l)try{So(l,o)}catch(r){for(console.error("[RO][TabTarget] renderMobList crashed \u2014 full reset to recover",r),Gt();l.firstChild;)l.removeChild(l.firstChild)}}i(_,"updateUI");var N=null;function So(t,e){let o=new Set(e.map(r=>r.entity.GID)),n=L.size>0;for(let[r,c]of st)o.has(r)||(c.entry.remove(),st.delete(r),at.delete(r));let s=null,l=!1;for(let r of e){if(r.reachable===!1&&!l){N||(N=document.createElement("div"),N.className="tt-unreachable-sep",N.textContent="Unreachable");let T=s?s.nextSibling:t.firstChild;T!==N&&t.insertBefore(N,T),s=N,l=!0}let c=r.entity,a=c.GID,d=c.job,f=r.label||c.display&&c.display.name||`mob ${c.job}`,u=st.get(a);if(!u){let T=document.createElement("div");T.className="tt-mob-entry";let P=document.createElement("span");P.className="tt-arrow",P.textContent="\u2191",T.appendChild(P);let vt=document.createElement("span");vt.className="tt-arrow-text",T.appendChild(vt);let It=document.createElement("span");It.className="tt-rare",T.appendChild(It);let St=document.createElement("span");St.className="tt-pin-icon ro-icon ro-icon-crosshair",St.addEventListener("click",J=>{J.stopPropagation(),xo(r.entity?.job)}),T.appendChild(St),T.addEventListener("click",J=>{if(T.classList.contains("stale")||w)return;J.preventDefault();let tt=S.get(a);tt&&(F(tt,!1,"list"),_())}),T.addEventListener("dblclick",J=>{if(T.classList.contains("stale")||w)return;J.preventDefault();let tt=S.get(a);tt&&(F(tt,!1,"list-dbl"),Ut())}),u={entry:T,label:vt,arrow:P,rare:It,stale:!1},st.set(a,u),at.set(a,P)}u.entry.classList.toggle("active",a===m),u.entry.classList.toggle("locked",w&&a===m),u.entry.classList.toggle("woe",!!r.kind);let p=!r.kind&&!!d&&L.has(d);u.entry.classList.toggle("pinned",p),u.entry.classList.toggle("dim",n&&!p&&!r.kind),u.entry.classList.toggle("reachable",r.reachable===!0),u.entry.classList.toggle("unreachable",r.reachable===!1),r.stale!==u.stale&&(u.entry.classList.toggle("stale",r.stale),u.stale=r.stale);let b=r.stale?r.reason==="teleport"?" \xB7 teleported":" \xB7 hors vue":"",x=String(a).slice(-4),C=`${f} #${x}${b}`;u.label.textContent!==C&&(u.label.textContent=C);let v=!r.kind&&Tt.get(d),X=v?`rare \xD7${v.amount}`:"";u.rare.textContent!==X&&(u.rare.textContent=X,u.rare.title=v?`${v.amount} on map \xB7 ${(v.share*100).toFixed(1)} % of its ${v.total} mobs`:"");let U=s?s.nextSibling:t.firstChild;U!==u.entry&&t.insertBefore(u.entry,U),s=u.entry}!l&&N&&N.remove(),xt()}i(So,"renderMobList");var Ao=new Set([ot?.AL_HEAL??28]);function _o(t){let e=E?.Entity;if(!e||!e.position)return!1;let o=$.getSkillById(t.ID),n=o&&o.type?o.type|0:0,s=Z.TYPE?.PLACE??2,l=Z.TYPE?.TRAP??32;return n&(s|l)?Z.onUseSkillToPos(t.ID,t.count,e.position[0]|0,e.position[1]|0):Z.onUseSkillToId(t.ID,t.count,e.GID),!0}i(_o,"castSkillOnSelf");function Yt(t,e=t){let n=$.getList()[t];if(!(!n||!n.isSkill&&!n.ID)){if(n.isSkill){if(R[e]===k.SELF&&_o(n))return;if(m){let s=$.getSkillById(n.ID),l=Z.TYPE?.ENEMY||1,r=s&&s.type&&s.type&l,c=s&&Ao.has(n.ID);if(r||c){Z.onUseSkillToId(n.ID,n.count,m);return}}}$.onShortCut({cmd:`EXECUTE${t}`})}}i(Yt,"triggerShortCutSlot");var Co=["MakeItemSelection"],Do=40,Mo=450,Lo=150,y={active:!1,slotIdx:-1,timer:0,nextAt:0},ft=null;function No(){for(let t of Co){let e=document.getElementById(t);if(e&&e.offsetParent!==null)return e}return null}i(No,"findCraftWindow");function Ro(){if(!y.active){B();return}let t=Date.now();if(t<y.nextAt)return;let e=No();if(e){let o=Ke.components.MakeItemSelection;if(ft!=null&&o&&typeof o.setIndex=="function"){let s=e.querySelector(".list");s&&s.querySelector(`div[data-index="${ft}"]`)&&o.setIndex(ft)}o&&o.index!=null&&o.index!==-1&&(ft=o.index);let n=e.querySelector(".ok");n&&n.offsetParent!==null&&n.click(),y.nextAt=t+Lo}else $.onShortCut({cmd:`EXECUTE${y.slotIdx}`}),y.nextAt=t+Mo}i(Ro,"autoCraftTick");function Oo(t){y.active&&y.slotIdx===t||(B(),y.active=!0,y.slotIdx=t,y.nextAt=0,y.timer=setInterval(Ro,Do))}i(Oo,"startAutoCraft");function B(){y.timer&&(clearInterval(y.timer),y.timer=0),y.active=!1,y.slotIdx=-1}i(B,"stopAutoCraft");function Po(t){return!t||!Array.isArray(t)?[]:t.map(e=>({key:e.key,slot:e.slot|0}))}i(Po,"parseShortcutBindings");var Lt=!1;function Go(){if(Lt)return;Lt=!0;let t=i(s=>{if(s.altKey||s.ctrlKey||s.metaKey||!s.code||!s.code.startsWith("Digit"))return;let l=parseInt(s.code.slice(5),10);if(l<1||l>9)return;let r=document.activeElement;for(;r?.shadowRoot?.activeElement;)r=r.shadowRoot.activeElement;if(r&&(r.tagName==="INPUT"||r.tagName==="TEXTAREA"||r.isContentEditable))return;let c=l-1,a=l+8,f=$.getList()?.[a]?.isSkill?R[c]:k.OFF,u=f===k.SELF,p=f===k.AUTO;if(!(!m&&!u&&!p)){if(s.preventDefault(),s.stopImmediatePropagation(),p){Oo(a);return}Yt(a,c)}},"onKeyDown"),e=i(s=>{if(!y.active||!s.code||!s.code.startsWith("Digit"))return;let l=parseInt(s.code.slice(5),10);y.slotIdx===l+8&&B()},"onKeyUp"),o=i(()=>{y.active&&B()},"onBlur"),n=i(()=>{document.hidden&&y.active&&B()},"onVisibility");window.addEventListener("keydown",t,!0),window.addEventListener("keyup",e,!0),window.addEventListener("blur",o),document.addEventListener("visibilitychange",n),pe(()=>{window.removeEventListener("keydown",t,!0),window.removeEventListener("keyup",e,!0),window.removeEventListener("blur",o),document.removeEventListener("visibilitychange",n),B(),Lt=!1})}i(Go,"installDigitCapture");function ue(){if(!h||!h.ZC)return;let t=i((a,d)=>{let f=Be(a,d);typeof f=="function"&&Pt.push(f)},"trackPacket"),e=i((a,d)=>{let f=$e(a,d);typeof f=="function"&&Pt.push(f)},"trackSend"),o=i(()=>{xt(),V()},"onMove");["NOTIFY_MOVE","NOTIFY_MOVE2","NOTIFY_PLAYERMOVE"].forEach(a=>{h.ZC[a]&&t(h.ZC[a],o)});let s=i(()=>{I.map++,Gt()},"onMapChange");h.ZC.NPCACK_MAPMOVE&&t(h.ZC.NPCACK_MAPMOVE,s),h.ZC.NPCACK_SERVERMOVE&&t(h.ZC.NPCACK_SERVERMOVE,s),j.push(Nt(nt.CHAR_SELECT,()=>{I.spawn=0,I.vanish=0,I.map=0,I.act=0,I.skill=0,Gt(),B(),R=Array(9).fill(0),wt(),W=!1,zt()}));let l=i(a=>{I.spawn++;let d=a?.GID;d&&K.has(d)&&(K.delete(d),z.delete(d)),w&&d===m&&setTimeout(()=>{let f=S.get(d);w&&d===m&&f&&F(f,!1,"relock")},0),V()},"onEntitySpawn");["NOTIFY_STANDENTRY","NOTIFY_STANDENTRY2","NOTIFY_STANDENTRY3","NOTIFY_STANDENTRY4","NOTIFY_STANDENTRY5","NOTIFY_STANDENTRY6","NOTIFY_STANDENTRY9","NOTIFY_STANDENTRY10","NOTIFY_STANDENTRY11","NOTIFY_NEWENTRY","NOTIFY_NEWENTRY11","NOTIFY_MOVEENTRY","NOTIFY_MOVEENTRY11"].forEach(a=>{h.ZC[a]&&t(h.ZC[a],l)}),h.ZC.NOTIFY_VANISH&&t(h.ZC.NOTIFY_VANISH,a=>{I.vanish++;let d=a?.GID;if(d===m&&(!w||a.type===re)&&(Vt(A),A=null,m=null,w=!1,q=null),d){if(K.add(d),setTimeout(()=>{K.delete(d)},Je),a.type===Xe){let f=z.get(d);f&&(f.reason="teleport")}else z.delete(d);a.type===re&&G.delete(d)&&$t(d)}V()});for(let a of["NOTIFY_ACT3","NOTIFY_ACT2","NOTIFY_ACT"])h.ZC[a]&&t(h.ZC[a],lo);for(let a of["USESKILL_ACK","USESKILL_ACK2","USESKILL_ACK3","NOTIFY_SKILL","NOTIFY_SKILL2","USE_SKILL","USE_SKILL2"])h.ZC[a]&&t(h.ZC[a],uo);if(h.CZ)for(let a of["USE_SKILL","USE_SKILL2"])h.CZ[a]&&e(h.CZ[a],co);let c=i(a=>{if(q==null)return;let d=a?.GID??a?.AID;if(d!==q)return;q=null;let f=m;queueMicrotask(()=>{if(d!==f||d!==m)return;let u=S.get(d);if(u?.display&&u.display.load===u.display.TYPE.COMPLETE)try{u.display.add()}catch{}})},"onAckName");for(let a of["ACK_REQNAME2","ACK_REQNAME","ACK_REQNAMEALL","ACK_REQNAMEALL2"])h.ZC[a]&&t(h.ZC[a],c)}i(ue,"hookPackets");function Fo(){let t=i(n=>{n.button===2&&(it=!0,bt())},"onDown"),e=i(n=>{n.button===2&&(it=!1,bt())},"onUp"),o=i(()=>{it&&bt()},"onMove");document.addEventListener("mousedown",t,!0),document.addEventListener("mouseup",e,!0),document.addEventListener("mousemove",o,!0),we.push(()=>document.removeEventListener("mousedown",t,!0),()=>document.removeEventListener("mouseup",e,!0),()=>document.removeEventListener("mousemove",o,!0))}i(Fo,"hookCameraRotation");var De=[];function Uo(t,e){console.log(`%c[RO][TabTarget v${rt.version}] Plugin loaded`,"color: #0ff; font-weight: bold"),De=Po(t&&t.shortcuts),ye=!!(t&&t.showDebugButtons),Rt=e&&e.ItemDb||null,j.push(Nt(nt.MAP_ENTER,()=>{le(),ce(),_()})),j.push(Nt(nt.MAP_READY,()=>{wo(),_()})),h&&h.ZC&&h.ZC.NOTIFY_VANISH?ue():j.push(ie(nt.WIRE_COMPLETE,()=>ue())),Fo(),Go(),H=he.registerPlayerWindow(()=>Io(),{persistKey:"TabTargetNative",defaultVisible:!0,onMount:i(()=>{be?.(),le(),ce()},"onMount")});function o(){_t.add("tabtarget","Toggle the Tab Target panel",function(){H.isVisible()?(H.hide(),this.addText("[TabTarget] hidden",this.TYPE.BLUE)):(H.show(),this.addText("[TabTarget] shown",this.TYPE.BLUE))},["tt"]),_t.add("focus","Lock / unlock the Tab Target target",function(){_e(),this.addText(`[TabTarget] target ${w?"locked":"unlocked"}`,this.TYPE.BLUE)})}return i(o,"registerChatCommand"),_t.$raw?o():j.push(ie(nt.MAP_ENTER,o)),ct=setInterval(_,500),dt=setInterval(xt,250),window.__TT_focusLog=yt,pe(({reason:n})=>{console.log(`[RO][TabTarget] cleanup reason=${n}`);for(let s of Pt.splice(0))try{s()}catch{}for(let s of j.splice(0))try{s()}catch{}for(let s of we.splice(0))try{s()}catch{}Q&&(cancelAnimationFrame(Q),Q=0),it=!1,ct&&(clearInterval(ct),ct=0),dt&&(clearInterval(dt),dt=0);for(let s of G.keys())$t(s);G.clear()}),!0}i(Uo,"Init");var tn={...rt,init:Uo};return { tn }
+	}
+
+	// Reshape body to a self-contained ES module string.
+	//   1. Detach the inline sourcemap if present (esbuild puts it at the
+	//      end of the bundle, AFTER our `return { tn }`). If we
+	//      leave it in place the next regex would never see `}` at end of
+	//      string and the swap would silently fail — module would have a
+	//      top-level `return` and crash with SyntaxError on Blob import.
+	//   2. Swap `return { tn }` → nothing, then append
+	//      `export default tn` so the module's default export is
+	//      the manifest object PluginManager wants.
+	//   3. Re-attach the sourcemap LAST so DevTools can map the bundle to
+	//      original src/* files.
+	const src = pluginCode.toString()
+	const rawBody = src.slice(src.indexOf('{') + 1, src.lastIndexOf('}'))
+	let body = rawBody
+	let sourceMappingComment = ''
+	const smMatch = body.match(/\n?[ \t]*\/\/# sourceMappingURL=[^\n]*/)
+	if (smMatch) {
+		sourceMappingComment = smMatch[0].trim()
+		body = body.slice(0, smMatch.index) + body.slice(smMatch.index + smMatch[0].length)
+	}
+	// Match any identifier (not the literal EXPORT name) : minified export
+	// names can contain `$`, a regex metachar that would break interpolation.
+	// The reshaped body ends with exactly one trailing `return { … }`.
+	body = body.replace(/\s*return\s*\{\s*[\w$]+\s*\}\s*$/, '')
+	const moduleSource = body
+		+ '\nexport default tn\n'
+		+ '//# sourceURL=TabTargetNative.js\n'
+		+ (sourceMappingComment ? sourceMappingComment + '\n' : '')
+
+	const blob = new Blob([moduleSource], { type: 'application/javascript' })
+	const blobUrl = URL.createObjectURL(blob)
+
+	try {
+		// Poll for the framework's TM_READY barrier to EXIST. Install order
+		// safety : the plugin TM userscript may load before the framework
+		// userscript, in which case W.__ROBROWSER_TM_READY is undefined and
+		// `await undefined` resolves immediately — then the canonical
+		// import of @robrowser/plugin-api would fail because the import map
+		// hasn't been installed yet.
+		let tries = 0
+		while (!W.__ROBROWSER_TM_READY) {
+			if (++tries > 100) {
+				console.error(`[TabTargetNative] framework not present after 10s — install ro-framework.user.js first`)
+				return
+			}
+			await new Promise(r => setTimeout(r, 100))
+		}
+		// Wait for the signal — forward-compat : we IGNORE its resolved
+		// value (v0 resolves with the pluginApi module ; v1 may change or
+		// remove that). Our code only relies on the "import map ready"
+		// semantics that the await provides.
+		await W.__ROBROWSER_TM_READY
+
+		// Canonical import via the @robrowser/plugin-api specifier. The
+		// ES module cache returns the same singleton bootstrap landed on
+		// ROFramework.PluginManager (used by console / diagnose).
+		const { PluginManager } = await import('@robrowser/plugin-api')
+		const mod = await import(blobUrl)              // page context, body manifest
+		PluginManager.register(mod.default)            // unified registration
+	} catch (e) {
+		console.error(`[TabTargetNative] PluginManager.register failed:`, e)
+	}
+})()
