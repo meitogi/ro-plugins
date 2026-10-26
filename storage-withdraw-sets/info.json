@@ -1,0 +1,27 @@
+{
+	"summary": "Pick a crafting set, choose how many, and the ingredients come out of your Cart and Storage.",
+	"about": "Withdraw Sets keeps your crafting lists: Poison Bottle, the four elemental Proof Potions, a full Twilight Alchemy 3 cast, and any list you write yourself. Choose how many crafts you want, press Withdraw, and it takes what is missing from your Cart first, then from your Storage: it opens the Storage with @storage or at the nearest Kafra, takes each item, and closes it. What you already carry is never taken twice. If you do not have enough for every craft, it prepares as many as it can and tells you in red which item ran short, or what is missing when nothing can be made.",
+	"howto": [
+		{
+			"key": "/withdraw",
+			"text": "open or close the window"
+		},
+		{
+			"key": "/withdraw <set> [crafts]",
+			"text": "take a set without the window: /withdraw Poison Bottle 20"
+		},
+		{
+			"key": "×1 ×10 ×20 ×50",
+			"text": "how many crafts the Withdraw button prepares, kept per set"
+		},
+		{
+			"key": "Creation Guide",
+			"text": "write it with no number: it is taken once, never multiplied"
+		}
+	],
+	"needs": [
+		"a Kafra in sight, or @storage on the server",
+		"pre-renewal recipes"
+	],
+	"preview": null
+}

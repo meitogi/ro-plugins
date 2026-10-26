@@ -329,6 +329,30 @@
 			]
 		},
 		{
+			"slug": "storage-withdraw-sets",
+			"name": "StorageWithdrawSets",
+			"description": "/withdraw opens a window of named crafting sets — a textarea of lines per craft like '2 Frill', 'Red Gemstone x1' or an item id ; a line with no count (a Creation Guide) is held once, never multiplied. Each set has a ×1 / ×10 / ×20 / ×50 choice. Withdraw counts what the inventory already holds, takes the rest from the cart then the personal storage, and when the stock falls short prepares the max makeable. The storage is opened only when needed (@storage when the « @storage available » box is ticked, else or if it does not open the nearest Kafra in sight), its withdraws go first and it is closed before any cart move (rAthena ignores cart moves while a storage is open). Red chat lines name the items that cap the count and any refused request ; one white line gives the crafts ready. /withdraw <set> [N] runs without the window. Presets: Alchemist (one Twilight Alchemy 3 cast), Poison Bottle, Fireproof / Coldproof / Earthproof / Thunderproof Potion. Sets are saved per account ; the guild storage is refused.",
+			"summary": "Pick a crafting set, choose how many, and the ingredients come out of your Cart and Storage.",
+			"version": "1.0.0",
+			"latest": "1.0.0",
+			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/1.0.0/storage-withdraw-sets.di.esm.js",
+			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/1.0.0/storage-withdraw-sets.esm.js",
+			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/1.0.0/storage-withdraw-sets.user.js",
+			"notesUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/patchlog.json",
+			"infoUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/info.json",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"sha256": "f3f9449bff898185f6ba2504d0b5959eb3a1bddd63ee2d711577d5943d4ab28a",
+					"commit": "3f77c6eef52cf9280b0069a1c0ed39deb70c8556",
+					"date": "2026-10-26",
+					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/1.0.0/storage-withdraw-sets.di.esm.js",
+					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/1.0.0/storage-withdraw-sets.esm.js",
+					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/storage-withdraw-sets/1.0.0/storage-withdraw-sets.user.js"
+				}
+			]
+		},
+		{
 			"slug": "tab-target",
 			"name": "TabTargetNative",
 			"description": "Tab / Shift+Tab / Enter targeting with native UIComponent panel; the lock key (default: the key above Tab — ² on Windows AZERTY, @ on Mac AZERTY — rebindable from the panel) or /focus locks the target (nothing moves it — Tab, list or world click, manual attack/skill, homun/merc — Space and skill keys keep hitting it ; survives leaving sight, released on death or toggling it again) and auto-focus on manual attack. Optional per-character checkbox auto-focuses the mob the player's own homunculus/mercenary attacks (melee or skill), with owner-priority: the player's last manual target holds focus for a few seconds so a minion hit won't yank it away. /tt and /tabtarget chat commands toggle the panel. Digit row 1-9 (layout-agnostic) auto-targets the locked mob on native skillbar F2 slots 1-9, shown as two panel rows (5 + 4) of split buttons: the number (left) casts, the right segment is a tri-state per-slot mode (off / A=auto-craft (hold) / S=self-cast), persisted per character. A holds a key to loop cast → confirm MakeItemSelection → re-cast (Prepare Potion, Arrow Making, Cooking…) and remembers the last confirmed ITID to re-select it on subsequent cycles (uniform across crafts, falls back to list[0] if the memory isn't in the new list, resets on page reload); S auto-casts the skill on the player (PLACE/TRAP under-foot, others on player GID); Ctrl+digit falls through to the native skillbar. The « Mobs & Players » list holds the mobs on a normal map; on a GvG map (WoE) it switches by itself to the hostile players (outside our party, guild and allied guilds, shown with their guild) by distance, then their homunculi, then the enemy guardians, then the Emperium — the order Tab cycles — and manual attacks/skills on them move the focus too. A mob rare on its map (at most 5 % of the map's mobs or at most 3 there, counted from the ItemDb mob sheets) gets a « rare ×N » badge on its row and a white minimap cross at the cell it was last seen, kept once it leaves the screen, removed on its death or a map change. Triple-click the titlebar to toggle the legacy Prev/Attack/Next debug buttons at runtime.",

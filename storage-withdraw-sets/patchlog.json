@@ -1,0 +1,37 @@
+{
+	"releases": [
+		{
+			"version": "1.0.0",
+			"date": "2026-10-26",
+			"title": "First release",
+			"notes": [
+				{
+					"type": "new",
+					"keyword": "Crafting sets",
+					"text": "/withdraw opens a window of crafting sets. Pick one, choose ×1, ×10, ×20 or ×50, press Withdraw: the ingredients come out of your Cart and Storage."
+				},
+				{
+					"type": "new",
+					"keyword": "Presets",
+					"text": "Poison Bottle (Create Deadly Poison), Fireproof, Coldproof, Earthproof and Thunderproof Potion, and a full Twilight Alchemy 3 cast. Reset presets brings them back if you edit or delete one."
+				},
+				{
+					"type": "new",
+					"keyword": "Cart first",
+					"text": "What you already carry is never taken again, the Cart is used before the Storage, and the Storage is only opened when the Cart is not enough."
+				},
+				{
+					"type": "new",
+					"keyword": "Short stock",
+					"text": "Not enough for every craft? It prepares as many as it can and says in red which item ran short. When nothing can be made, it lists what is missing.",
+					"details": "A weight or slot refusal from the server also gets its own red line, with the reason."
+				},
+				{
+					"type": "new",
+					"keyword": "Your own sets",
+					"text": "Write a set as one craft, one item per line: 2 Frill, Red Gemstone x1, or an item id. A Creation Guide goes on a line with no number: it is taken once, never multiplied."
+				}
+			]
+		}
+	]
+}
