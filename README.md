@@ -15,25 +15,23 @@ Strict semver: **PATCH** = a fix only, **MINOR** = a backwards-compatible
 feature, **MAJOR** = a breaking change. A published version never changes; a
 bug found after release ships as a new version.
 
-**Today, every release is final**: plain `X.Y.Z`, with no `-a` / `-b` / `-rc`
+The registry runs in one of two modes, and the kind of change decides which
+pre-releases a version goes through in each:
+
+| Change | Private (today) | Public |
+|---|---|---|
+| PATCH, a contained fix | `X.Y.Z` | `X.Y.Z` |
+| PATCH that touches saved data or packets | `X.Y.Z` | `-rc.N`, then `X.Y.Z` |
+| MINOR, a new feature | `X.Y.Z` | `-b.N` (testers), then `X.Y.Z` |
+| MINOR, an experimental feature | `X.Y.Z` | `-a.N`, then `-b.N`, then `X.Y.Z` |
+| MAJOR | `X.Y.Z` | `-a.N`, then `-b.N`, then `-rc.N`, then `X.Y.Z` |
+
+**Private (today)**: every release is final, with no `-a` / `-b` / `-rc`
 suffix. The people using these plugins run them every day, so every build that
 reaches them is a real release. Versions published earlier as `X.Y.Z-a.N`
 move to plain `X.Y.Z` on their next release.
 
-### Once the registry goes public
-
-Pre-releases come back, and the kind of change decides which ones a version
-goes through:
-
-| Change | Path to the release |
-|---|---|
-| PATCH, a contained fix | straight to `X.Y.Z` |
-| PATCH that touches saved data or packets | `-rc.N`, then `X.Y.Z` |
-| MINOR, a new feature | `-b.N` (testers), then `X.Y.Z` |
-| MINOR, an experimental feature | `-a.N`, then `-b.N`, then `X.Y.Z` |
-| MAJOR | `-a.N`, then `-b.N`, then `-rc.N`, then `X.Y.Z` |
-
-`-a` is for us only, `-b` is for players who opt in to testing, and `-rc` is
-frozen: only blocking fixes, then it ships unchanged as `X.Y.Z`. Semver puts
-`a` < `b` < `rc` < the release, so the order above is also the order players
-see.
+**Public**: `-a` is for us only, `-b` is for players who opt in to testing,
+and `-rc` is frozen: only blocking fixes, then it ships unchanged as `X.Y.Z`.
+Semver puts `a` < `b` < `rc` < the release, so the order in the table is also
+the order players see.
