@@ -1,0 +1,52 @@
+{
+	"releases": [
+		{
+			"version": "1.7.0",
+			"date": "2026-10-26",
+			"title": "Smarter /rr hunt",
+			"notes": [
+				{
+					"type": "new",
+					"keyword": "Resume",
+					"text": "Starting /rr hunt again on the same map picks up where the last hunt stopped instead of walking the searched ground again. Once a map has been fully searched, the next hunt starts fresh."
+				},
+				{
+					"type": "new",
+					"keyword": "Narrow a hunt",
+					"text": "/rr hunt <name or id> during a hunt switches it to that mob without starting over: /rr hunt, then /rr hunt ghostring."
+				},
+				{
+					"type": "new",
+					"keyword": "Routes",
+					"text": "Every reachable part of a map can now get a ready-made hunting route. pay_fild04 ships with one: about a quarter less walking to search the whole map."
+				},
+				{
+					"type": "new",
+					"keyword": "Stormy Knight",
+					"text": "A second Garm Baby on xmas_dun02 means Stormy Knight is up: the radar says so, and /rr hunt stops on it like on a tomb."
+				},
+				{
+					"type": "new",
+					"keyword": "Boarding Halter",
+					"text": "/rr hunt can put the Boarding Halter on before it sets off. Off by default; turn it on in the Options tab.",
+					"details": "Only a character on foot with the Halter in its Inventory is mounted. It is never taken off at the end of a hunt; remember that skills are locked while mounted."
+				},
+				{
+					"type": "fixed",
+					"keyword": "Garm Baby",
+					"text": "Killing one of Stormy Knight's Garm Babies no longer starts a respawn timer on the natural Garm Baby of xmas_dun02."
+				},
+				{
+					"type": "fixed",
+					"keyword": "Dead boss",
+					"text": "Coming back to xmas_dun02 no longer announces Stormy Knight as up when its death is already on record."
+				},
+				{
+					"type": "fixed",
+					"keyword": "Walking mobs",
+					"text": "A mob that walks into view is now noticed right away, not only one that appears in place."
+				}
+			]
+		}
+	]
+}

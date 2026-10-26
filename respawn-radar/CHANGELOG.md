@@ -1,5 +1,18 @@
 # RespawnRadar — changelog
 
+## 1.7.0 — 2026-10-26
+
+- docs(respawn-radar): player sheet and 1.7.0 patch notes (7aa757ac6)
+- feat(respawn-radar): /rr hunt <mob> over a running hunt narrows it (d0c3bb148)
+- feat(respawn-radar): ship the baked pay_fild04 route, release 1.6.0 (c6f3294d8)
+- feat(respawn-radar): /rr hunt resumes over the trail a stopped hunt left (b07a866bd)
+- fix(respawn-radar): a mob WALKING into view triggers the scan too (1727a04e1)
+- fix(respawn-radar): a count tell from memory never announces a dead boss (af2485bb8)
+- feat(respawn-radar): /rr hunt stops on a count tell, like on a tomb (6c6083bb4)
+- fix(respawn-radar): a summoned Garm Baby no longer steals the natural one's row (82d54e488)
+- feat(respawn-radar): the respawn DB emits count tells (ea9bdfc52)
+- feat(respawn-radar): /rr hunt mounts the Boarding Halter when it is not on (3597c2fd1)
+
 ## 1.5.0-a.40 — 2026-10-17
 
 First published version.

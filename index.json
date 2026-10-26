@@ -236,11 +236,14 @@
 			"slug": "respawn-radar",
 			"name": "RespawnRadar",
 			"description": "MVP / respawn helper — kill tracking, respawn windows, minimap marks, per-mob kill counters, and a map sweep that walks until a watched mob is in sight.",
-			"version": "1.5.0-a.40",
-			"latest": "1.5.0-a.40",
-			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.5.0-a.40/respawn-radar.di.esm.js",
-			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.5.0-a.40/respawn-radar.esm.js",
-			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.5.0-a.40/respawn-radar.user.js",
+			"summary": "Know when each MVP respawns, see it on the minimap, and let /rr hunt search the map for it.",
+			"version": "1.7.0",
+			"latest": "1.7.0",
+			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.7.0/respawn-radar.di.esm.js",
+			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.7.0/respawn-radar.esm.js",
+			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.7.0/respawn-radar.user.js",
+			"notesUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/patchlog.json",
+			"infoUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/info.json",
 			"versions": [
 				{
 					"version": "1.5.0-a.40",
@@ -250,6 +253,15 @@
 					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.5.0-a.40/respawn-radar.di.esm.js",
 					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.5.0-a.40/respawn-radar.esm.js",
 					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.5.0-a.40/respawn-radar.user.js"
+				},
+				{
+					"version": "1.7.0",
+					"sha256": "1286e8eee7f28e9802c7c3f50f16230660961ebd85f01ceb3cb07810b73b9ddb",
+					"commit": "7aa757ac6f9f2be0baab49a1048bdeaa002c5237",
+					"date": "2026-10-26",
+					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.7.0/respawn-radar.di.esm.js",
+					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.7.0/respawn-radar.esm.js",
+					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/respawn-radar/1.7.0/respawn-radar.user.js"
 				}
 			]
 		},

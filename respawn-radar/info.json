@@ -1,0 +1,40 @@
+{
+	"summary": "Know when each MVP respawns, see it on the minimap, and let /rr hunt search the map for it.",
+	"about": "RespawnRadar keeps an eye on the MVPs and bosses of the map you are on. When one dies, it starts its respawn window, so the panel tells you which ones are due and when, and the minimap shows them. Kills are counted per mob. /rr hunt walks the map for you, paints the ground it has already searched, and stops as soon as the boss, its tomb, or a sure sign that it is up comes into view. If you are away from the tab when it shows up, you get a desktop alert and your character steps back out of its reach.",
+	"howto": [
+		{
+			"key": "/rr",
+			"text": "open or close the panel"
+		},
+		{
+			"key": "/rr <mob id>",
+			"text": "track a mob"
+		},
+		{
+			"key": "/rr hunt",
+			"text": "search this map until one of its MVPs, a tomb or a sign it is up shows"
+		},
+		{
+			"key": "/rr hunt <name or id>",
+			"text": "hunt a mob of your choice; during a hunt, narrows it to that mob"
+		},
+		{
+			"key": "/rr stop",
+			"text": "stop the hunt"
+		},
+		{
+			"key": "/rr zone",
+			"text": "show the searched ground for this map's MVP"
+		},
+		{
+			"key": "/rr clear-zone",
+			"text": "wipe the searched ground"
+		},
+		{
+			"key": "/rr up all",
+			"text": "clear every timer after a server restart"
+		}
+	],
+	"needs": [],
+	"preview": null
+}
