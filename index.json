@@ -308,6 +308,30 @@
 			]
 		},
 		{
+			"slug": "sell-all",
+			"name": "SellAll",
+			"description": "A « Sell all » button in the item list footer of the NPC sell window moves every listed stack to the selling list, as if each one was dropped with the quantity prompt skipped (NpcStore.receiveInventoryItemStack). Sends nothing : the player confirms with Sell. Favorites follow the favorite tab's deal lock (the engine leaves them out of the list while it is closed) ; on an inventory whose lock the player cannot see (InventoryV0, V1, V2) they always stay. No button on a bundle without receiveInventoryItemStack.",
+			"summary": "One button in the NPC sell window puts every item in the selling list.",
+			"version": "1.0.0",
+			"latest": "1.0.0",
+			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.di.esm.js",
+			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.esm.js",
+			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.user.js",
+			"notesUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/patchlog.json",
+			"infoUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/info.json",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"sha256": "cd020315dad32569e55d798a990e76667ac7f256060cea3e257c614f66826703",
+					"commit": "aacdeb132c96356c4ac5f14dddf7c3fe84e76e27",
+					"date": "2026-10-28",
+					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.di.esm.js",
+					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.esm.js",
+					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.user.js"
+				}
+			]
+		},
+		{
 			"slug": "storage-deposit",
 			"name": "StorageDeposit",
 			"description": "/deposit, or the Quick stack button at the bottom right of the inventory — while the personal storage is open, moves to it every inventory stack whose item the storage already holds. Stackables matched by item id ; equipment, equipped ammo, favorites and rentals stay put. One deposit at a time, each waiting for the server's answer plus a short human-like pause ; stops with a chat line when the storage is full. Refuses to run on the guild storage.",

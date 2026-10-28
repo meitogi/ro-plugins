@@ -1,0 +1,21 @@
+{
+	"releases": [
+		{
+			"version": "1.0.0",
+			"date": "2026-10-28",
+			"title": "First release",
+			"notes": [
+				{
+					"type": "new",
+					"keyword": "Sell all",
+					"text": "A Sell all button in the NPC sell window puts every listed item in the selling list. Nothing is sold until you press Sell."
+				},
+				{
+					"type": "new",
+					"keyword": "Favorites",
+					"text": "Favorites follow the favorite tab's lock: locked, they stay out; unlocked, Sell all takes them too."
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,18 @@
+{
+	"summary": "One button in the NPC sell window puts every item in the selling list.",
+	"about": "Sell All adds a Sell all button at the bottom of the item list when you sell to an NPC. It moves every item of that list to the selling list at once, whole stacks, without asking quantities. Nothing is sold yet: check the list, take back what you want to keep, then press Sell. Favorites follow the lock of your inventory's favorite tab: locked, they stay out of the sale; unlocked, Sell all takes them too.",
+	"howto": [
+		{
+			"key": "Sell all",
+			"text": "every listed item goes to the selling list"
+		},
+		{
+			"key": "Sell",
+			"text": "confirms the sale, as usual"
+		}
+	],
+	"needs": [
+		"a client with whole-stack transfer to the NPC sell window"
+	],
+	"preview": null
+}
