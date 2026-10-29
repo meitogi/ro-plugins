@@ -1,5 +1,9 @@
 # RespawnRadar — changelog
 
+## 1.7.1 — 2026-10-29
+
+- fix(respawn-radar): read a long MVP Status Board to the end (2c3fa9cd1)
+
 ## 1.7.0 — 2026-10-26
 
 - docs(respawn-radar): player sheet and 1.7.0 patch notes (7aa757ac6)

@@ -1,6 +1,17 @@
 {
 	"releases": [
 		{
+			"version": "1.7.1",
+			"date": "2026-10-29",
+			"notes": [
+				{
+					"type": "fixed",
+					"keyword": "MVP Status Board",
+					"text": "A long MVP Status Board is now read to the end. Past about 250 entries, the MVPs listed last (Tao Gunka among them) were skipped, so their timers were never corrected from it."
+				}
+			]
+		},
+		{
 			"version": "1.7.0",
 			"date": "2026-10-26",
 			"title": "Smarter /rr hunt",
