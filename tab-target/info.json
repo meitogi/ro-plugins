@@ -1,0 +1,30 @@
+{
+	"summary": "Pick your target with Tab, lock it, and fire your skills on it — mobs, or enemy players in WoE.",
+	"about": "Tab Target lists what you can hit around you and lets you pick it from the keyboard. On a normal map it shows the mobs, nearest first, those you can walk to above the others; a mob rare on its map gets a « rare » badge and a white cross on the minimap where it was last seen. In a castle during WoE the list switches by itself to the enemy players (outside your party, guild and allied guilds), then their homunculi, the guardians and the Emperium. Lock a target and nothing moves it until it dies: your skill keys 1-9 fire on it.",
+	"howto": [
+		{
+			"key": "Tab / Shift+Tab",
+			"text": "next / previous target"
+		},
+		{
+			"key": "Enter or Space",
+			"text": "attack the target"
+		},
+		{
+			"key": "² (key above Tab) or /focus",
+			"text": "lock or unlock the target; rebind it from the panel"
+		},
+		{
+			"key": "1-9",
+			"text": "cast the skill of F2 slots 1-9 on the target; Ctrl+digit keeps the game shortcut"
+		},
+		{
+			"key": "/tt",
+			"text": "show or hide the panel"
+		}
+	],
+	"needs": [
+		"the ItemDb plugin (/pm), for the rare-mob badge"
+	],
+	"preview": null
+}

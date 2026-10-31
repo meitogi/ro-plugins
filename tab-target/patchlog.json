@@ -1,0 +1,36 @@
+{
+	"releases": [
+		{
+			"version": "7.21.0",
+			"date": "2026-10-31",
+			"title": "Enemy players in WoE",
+			"notes": [
+				{
+					"type": "fixed",
+					"keyword": "WoE",
+					"text": "In a castle, the list shows the enemy players again and Tab reaches them. With the current Plugin Manager the list stayed on the mobs and the Emperium."
+				},
+				{
+					"type": "new",
+					"keyword": "Mobs & Players",
+					"text": "One list for everything: the mobs on a normal map, and in WoE the enemy players (outside your party, guild and allied guilds, shown with their guild), then their homunculi, the guardians and the Emperium. Tab walks them in that order, and attacking one moves the target to it."
+				},
+				{
+					"type": "new",
+					"keyword": "Reachable first",
+					"text": "The mobs you can walk to come first; the others sit below « Unreachable ». Every mob in view is listed, with no row limit."
+				},
+				{
+					"type": "new",
+					"keyword": "Rare mobs",
+					"text": "A mob rare on its map gets a « rare ×N » badge, and a white cross on the minimap where it was last seen, until it dies or you leave the map. Needs the ItemDb plugin."
+				},
+				{
+					"type": "fixed",
+					"keyword": "Tab",
+					"text": "Tab cycles the target after a click on the panel, instead of moving the focus to the chat."
+				}
+			]
+		}
+	]
+}

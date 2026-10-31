@@ -1,5 +1,10 @@
 # TabTargetNative — changelog
 
+## 7.21.0 — 2026-10-31
+
+- release(tab-target): 7.21.0 — enemy players back in the WoE list (359bc9a5d)
+- feat(v3): bundle woe-hostility into the plugins that use it (9e83ebc9e)
+
 ## 7.21.0-a.23 — 2026-10-22
 
 - fix(tab-target): Tab cycles the target after a click on the panel (fc90dbe1a)
