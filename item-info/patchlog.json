@@ -1,0 +1,20 @@
+{
+	"releases": [
+		{
+			"version": "1.13.0",
+			"date": "2026-10-31",
+			"notes": [
+				{
+					"type": "new",
+					"keyword": "Database file",
+					"text": "Drop a cyro.json.gz on the window, or press DB, and Item Info reads that database. The line at the bottom says which one you use, and back to online returns to the downloaded one."
+				},
+				{
+					"type": "changed",
+					"keyword": "ItemDb",
+					"text": "Item Info reads its data from the ItemDb plugin: install it from /pm too. Without it, /ii and /mi tell you so."
+				}
+			]
+		}
+	]
+}

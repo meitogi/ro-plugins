@@ -1,5 +1,10 @@
 # RoItemInfo — changelog
 
+## 1.13.0 — 2026-10-31
+
+- fix(item-info): say so when no database could be downloaded (202d3a12d)
+- feat(item-info): load a database file on the window, and say when ItemDb is missing (af7013c08)
+
 ## 1.12.0-a.2 — 2026-10-17
 
 First published version.

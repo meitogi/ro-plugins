@@ -149,6 +149,30 @@
 			]
 		},
 		{
+			"slug": "item-db",
+			"name": "ItemDb",
+			"description": "The pre-renewal item database as a plugin, for the native Plugin Manager: the gzipped bundles of the ro-item-db repo pinned to one commit (jsDelivr, then raw.githubusercontent, plain fetch), cached in IndexedDB (ROFW_items), or a bundle file loaded by the player (loadFile, kept until useOnline). Its init() return is deps.ItemDb for ItemInfo, DropNotifier and TabTarget. Same code as the @robrowser/item-db lib (libs/item-db/src/core.js).",
+			"summary": "The item and monster database that ItemInfo, DropNotifier and TabTarget read.",
+			"version": "2.8.0",
+			"latest": "2.8.0",
+			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/2.8.0/item-db.di.esm.js",
+			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/2.8.0/item-db.esm.js",
+			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/2.8.0/item-db.user.js",
+			"notesUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/patchlog.json",
+			"infoUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/info.json",
+			"versions": [
+				{
+					"version": "2.8.0",
+					"sha256": "84a7ea0dec2090f44da16cc697abb739da6c14f6a6e5903e1df57d66f5f442df",
+					"commit": "202d3a12d829d1c27b4e9d4ea8facc2aee7b669c",
+					"date": "2026-10-31",
+					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/2.8.0/item-db.di.esm.js",
+					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/2.8.0/item-db.esm.js",
+					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-db/2.8.0/item-db.user.js"
+				}
+			]
+		},
+		{
 			"slug": "item-icon-fallback",
 			"name": "ItemIconFallback",
 			"description": "Serve a placeholder icon when an item-icon texture (data/texture/<interface>/item/*.bmp) never resolves, so the inventory / cart / selection slot always paints and stays draggable + clickable. Wraps Client.loadFile for that path only : an explicit load error, or no callback at all within 3s, paints the client's own Apple icon (item/사과.bmp, the official clients' default for an unresolvable item), or a generated 24x24 '?' PNG when the Apple fails too. Covers the two upstream dead-ends — MemoryItem.onerror with an onload-only caller (nothing fires, blank forever) and Texture.load's missing img.onerror (the Memory slot stays pending forever, Memory.exist() keeps it from ever being re-requested). A real icon arriving late still overwrites the placeholder. Failing filenames are logged once each to the console and to the local dev-log server (file item-icon-fallback) so the underlying missing / undecodable assets can be identified.",
@@ -172,12 +196,15 @@
 		{
 			"slug": "item-info",
 			"name": "RoItemInfo",
-			"description": "Item database lookup — /iteminfo /ii <id|name> via native Commands, producedBy/consumedBy/unlocks details, mob sheets (/mobinfo /mi, or a Dropped by row) with the mob sprite, icon resolution via GRF/CDN. Consumes the ItemDb plugin for the data layer.",
-			"version": "1.12.0-a.2",
-			"latest": "1.12.0-a.2",
-			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.12.0-a.2/item-info.di.esm.js",
-			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.12.0-a.2/item-info.esm.js",
-			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.12.0-a.2/item-info.user.js",
+			"description": "Item database lookup — /iteminfo /ii <id|name> via native Commands, producedBy/consumedBy/unlocks details, mob sheets (/mobinfo /mi, or a Dropped by row) with the mob sprite, icon resolution via GRF/CDN. Consumes the ItemDb plugin for the data layer; a DB bundle file picked (DB button) or dropped on the window goes to ItemDb.loadFile, with a source line and a back-to-online link.",
+			"summary": "Look up any item or monster: stats, who drops it, what it makes, where to buy it.",
+			"version": "1.13.0",
+			"latest": "1.13.0",
+			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.13.0/item-info.di.esm.js",
+			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.13.0/item-info.esm.js",
+			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.13.0/item-info.user.js",
+			"notesUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/patchlog.json",
+			"infoUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/info.json",
 			"versions": [
 				{
 					"version": "1.12.0-a.2",
@@ -187,6 +214,15 @@
 					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.12.0-a.2/item-info.di.esm.js",
 					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.12.0-a.2/item-info.esm.js",
 					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.12.0-a.2/item-info.user.js"
+				},
+				{
+					"version": "1.13.0",
+					"sha256": "f7c26fed7594c9af214f171735a42a3e32ffce24636ea98c530da2fc3fce4301",
+					"commit": "202d3a12d829d1c27b4e9d4ea8facc2aee7b669c",
+					"date": "2026-10-31",
+					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.13.0/item-info.di.esm.js",
+					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.13.0/item-info.esm.js",
+					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/item-info/1.13.0/item-info.user.js"
 				}
 			]
 		},

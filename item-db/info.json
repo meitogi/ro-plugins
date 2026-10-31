@@ -1,0 +1,16 @@
+{
+	"summary": "The item and monster database that ItemInfo, DropNotifier and TabTarget read.",
+	"about": "ItemDb holds the pre-renewal item and monster database: what an item does, who drops it, what a box can give, where to buy it, and every monster sheet. It downloads it once and keeps it in your browser. On its own it shows nothing: install it for ItemInfo (/ii, /mi), DropNotifier and TabTarget's rare-mob marks.",
+	"howto": [
+		{
+			"key": "Load a file",
+			"text": "drop a cyro.json.gz (or cyro.mobs.json.gz) on the ItemInfo window to use that database instead"
+		},
+		{
+			"key": "Back to online",
+			"text": "the link in the ItemInfo window returns to the downloaded database"
+		}
+	],
+	"needs": [],
+	"preview": null
+}

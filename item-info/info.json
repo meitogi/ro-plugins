@@ -1,0 +1,26 @@
+{
+	"summary": "Look up any item or monster: stats, who drops it, what it makes, where to buy it.",
+	"about": "Item Info opens a window with everything about an item or a monster: stats, drops, what it is made from and what it makes, the shops and NPCs that sell it, the boxes that give it. Drop an item from your inventory on the window, or type a command. Rows link to each other, and the arrow goes back.",
+	"howto": [
+		{
+			"key": "/ii <id or name>",
+			"text": "looks up an item; /ii alone shows or hides the window"
+		},
+		{
+			"key": "/mi <id or name>",
+			"text": "opens a monster sheet"
+		},
+		{
+			"key": "Right click",
+			"text": "opens the game's own item window"
+		},
+		{
+			"key": "DB",
+			"text": "loads a database file (cyro.json.gz); dropping it on the window works too"
+		}
+	],
+	"needs": [
+		"the ItemDb plugin (/pm)"
+	],
+	"preview": null
+}

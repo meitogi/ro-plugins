@@ -1,0 +1,21 @@
+{
+	"releases": [
+		{
+			"version": "2.8.0",
+			"date": "2026-10-31",
+			"title": "First release",
+			"notes": [
+				{
+					"type": "new",
+					"keyword": "ItemDb",
+					"text": "The item and monster database is now a plugin of its own. Install it with ItemInfo, DropNotifier or TabTarget: they read their data from it."
+				},
+				{
+					"type": "new",
+					"keyword": "Database file",
+					"text": "Drop a cyro.json.gz on the ItemInfo window to use that database instead of the downloaded one. It stays until you go back online."
+				}
+			]
+		}
+	]
+}
