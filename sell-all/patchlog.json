@@ -1,6 +1,28 @@
 {
 	"releases": [
 		{
+			"version": "1.1.0",
+			"date": "2026-11-01",
+			"title": "/sell",
+			"notes": [
+				{
+					"type": "new",
+					"keyword": "/sell",
+					"text": "/sell <item> sells that item to the last shop you opened: everything you carry plus your storage, in as many trips as your weight allows."
+				},
+				{
+					"type": "new",
+					"keyword": ">N",
+					"text": "/sell red blood >100 keeps 100 in the storage."
+				},
+				{
+					"type": "new",
+					"keyword": "gstorage",
+					"text": "Add gstorage to sell from the guild storage too; off unless you type it."
+				}
+			]
+		},
+		{
 			"version": "1.0.0",
 			"date": "2026-10-28",
 			"title": "First release",

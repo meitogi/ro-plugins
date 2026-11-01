@@ -1,6 +1,6 @@
 {
-	"summary": "One button in the NPC sell window puts every item in the selling list.",
-	"about": "Sell All adds a Sell all button at the bottom of the item list when you sell to an NPC. It moves every item of that list to the selling list at once, whole stacks, without asking quantities. Nothing is sold yet: check the list, take back what you want to keep, then press Sell. Favorites follow the lock of your inventory's favorite tab: locked, they stay out of the sale; unlocked, Sell all takes them too.",
+	"summary": "One button in the NPC sell window puts every item in the selling list ; /sell empties one item from your inventory and storage into a shop.",
+	"about": "Sell All adds a Sell all button at the bottom of the item list when you sell to an NPC. It moves every item of that list to the selling list at once, whole stacks, without asking quantities. Nothing is sold yet: check the list, take back what you want to keep, then press Sell. Favorites follow the lock of your inventory's favorite tab: locked, they stay out of the sale; unlocked, Sell all takes them too. The /sell command sells one item for you, many round trips if needed: everything you carry, plus what your storage holds, and your guild storage when you add gstorage. Open the shop once, stay next to it, and type /sell red blood.",
 	"howto": [
 		{
 			"key": "Sell all",
@@ -9,10 +9,28 @@
 		{
 			"key": "Sell",
 			"text": "confirms the sale, as usual"
+		},
+		{
+			"key": "/sell <item>",
+			"text": "sell that item from your inventory and storage to the last shop you opened"
+		},
+		{
+			"key": ">N",
+			"text": "keep N in each storage: /sell red blood >100"
+		},
+		{
+			"key": "gstorage",
+			"text": "also sell what the guild storage holds: /sell red blood gstorage"
+		},
+		{
+			"key": "/sell stop",
+			"text": "stop a running /sell"
 		}
 	],
 	"needs": [
-		"a client with whole-stack transfer to the NPC sell window"
+		"a client with whole-stack transfer to the NPC sell window",
+		"@storage (and @gstorage) on the server for /sell to reach the storages",
+		"ItemDb, to type item names instead of ids"
 	],
 	"preview": null
 }

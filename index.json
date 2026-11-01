@@ -364,13 +364,13 @@
 		{
 			"slug": "sell-all",
 			"name": "SellAll",
-			"description": "A « Sell all » button in the item list footer of the NPC sell window moves every listed stack to the selling list, as if each one was dropped with the quantity prompt skipped (NpcStore.receiveInventoryItemStack). Sends nothing : the player confirms with Sell. Favorites follow the favorite tab's deal lock (the engine leaves them out of the list while it is closed) ; on an inventory whose lock the player cannot see (InventoryV0, V1, V2) they always stay. No button on a bundle without receiveInventoryItemStack.",
-			"summary": "One button in the NPC sell window puts every item in the selling list.",
-			"version": "1.0.0",
-			"latest": "1.0.0",
-			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.di.esm.js",
-			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.esm.js",
-			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.user.js",
+			"description": "A « Sell all » button in the item list footer of the NPC sell window moves every listed stack to the selling list, as if each one was dropped with the quantity prompt skipped (NpcStore.receiveInventoryItemStack). Sends nothing : the player confirms with Sell. Favorites follow the favorite tab's deal lock (the engine leaves them out of the list while it is closed) ; on an inventory whose lock the player cannot see (InventoryV0, V1, V2) they always stay. No button on a bundle without receiveInventoryItemStack. /sell <item|id> [>N] [gstorage] sells one item to the last shop the player opened (ZC.SELECT_DEALTYPE, within 15 cells) : the whole inventory stack, plus what the personal storage holds above N (@storage), plus — only with gstorage — the guild storage above N (@gstorage), trip after trip : withdraw up to 90 % of the max weight, close confirmed, deal window Sell, every stack of the item moved and submitted through NpcStore. Names resolve through ItemDb ; without it, ids only. /sell stop ends a run.",
+			"summary": "One button in the NPC sell window puts every item in the selling list ; /sell empties one item from your inventory and storage into a shop.",
+			"version": "1.1.0",
+			"latest": "1.1.0",
+			"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.1.0/sell-all.di.esm.js",
+			"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.1.0/sell-all.esm.js",
+			"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.1.0/sell-all.user.js",
 			"notesUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/patchlog.json",
 			"infoUrl": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/info.json",
 			"versions": [
@@ -382,6 +382,15 @@
 					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.di.esm.js",
 					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.esm.js",
 					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.0.0/sell-all.user.js"
+				},
+				{
+					"version": "1.1.0",
+					"sha256": "d7046eeaeb866efba32583a9146bbdde3c61863ce71ad047478f9aa3b50e8926",
+					"commit": "8fdeaaefabfadbeb46ceedd609336d3fff28f0ed",
+					"date": "2026-11-01",
+					"url": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.1.0/sell-all.di.esm.js",
+					"urlEsm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.1.0/sell-all.esm.js",
+					"urlTm": "https://cdn.jsdelivr.net/gh/meitogi/ro-plugins@main/sell-all/1.1.0/sell-all.user.js"
 				}
 			]
 		},
