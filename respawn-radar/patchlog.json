@@ -1,6 +1,28 @@
 {
 	"releases": [
 		{
+			"version": "1.7.3",
+			"date": "2026-11-01",
+			"notes": [
+				{
+					"type": "fixed",
+					"keyword": "/rr hunt",
+					"text": "/rr hunt no longer leaves thin strips at the edges of the rooms it crosses, only to walk all the way back for them at the end. A full search is about a quarter shorter on maps without a built-in route — anthell01 goes from about 10 to 8 minutes."
+				}
+			]
+		},
+		{
+			"version": "1.7.2",
+			"date": "2026-11-01",
+			"notes": [
+				{
+					"type": "fixed",
+					"keyword": "/rr hunt",
+					"text": "/rr hunt no longer walks into a warp portal it already knew about and ends up on the next map. On cmd_fild03 it used to leave at about a quarter of the search, on ayo_dun02 at about 60 %."
+				}
+			]
+		},
+		{
 			"version": "1.7.1",
 			"date": "2026-10-29",
 			"notes": [

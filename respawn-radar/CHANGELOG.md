@@ -1,5 +1,10 @@
 # RespawnRadar — changelog
 
+## 1.7.3 — 2026-11-01
+
+- fix(respawn-radar): /rr hunt finishes the strips in reach instead of coming back for them (54ab53b2d)
+- fix(respawn-radar): /rr hunt no longer walks into a warp it had blocked (c530dca63)
+
 ## 1.7.1 — 2026-10-29
 
 - fix(respawn-radar): read a long MVP Status Board to the end (2c3fa9cd1)
