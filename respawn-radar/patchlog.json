@@ -1,6 +1,17 @@
 {
 	"releases": [
 		{
+			"version": "1.7.4",
+			"date": "2026-11-01",
+			"notes": [
+				{
+					"type": "fixed",
+					"keyword": "/rr hunt",
+					"text": "/rr hunt walks without stopping again. Since 1.7.3 it stopped every few steps while finishing the edges of a room; it now plans those edges as one walk and turns on each of them without a halt. anthell01 is searched in about 6 minutes."
+				}
+			]
+		},
+		{
 			"version": "1.7.3",
 			"date": "2026-11-01",
 			"notes": [

@@ -1,5 +1,9 @@
 # RespawnRadar — changelog
 
+## 1.7.4 — 2026-11-01
+
+- fix(respawn-radar): /rr hunt walks the room edges without stopping (701ba7632)
+
 ## 1.7.3 — 2026-11-01
 
 - fix(respawn-radar): /rr hunt finishes the strips in reach instead of coming back for them (54ab53b2d)
